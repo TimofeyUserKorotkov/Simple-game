@@ -49,18 +49,19 @@ class Entity:
             if self.sprite > 5:
                 self.sprite = 0
 
-    #! @property
-    # def rect(self):
-    #     if self.type != 'player':
-    #         if not self.centered:
-    #             return pygame.Rect(self.pos[0] // 1, self.pos[1] // 1, self.size[0], self.size[1])
-    #         else:
-    #             return pygame.Rect((self.pos[0] - self.size[0] // 2) // 1, (self.pos[1] - self.size[1] // 2) // 1, self.size[0], self.size[1])
-    #     else:
-    #         if not self.centered:
-    #             return pygame.Rect(self.pos[0] // 1, self.pos[1] // 1, self.size[0], self.size[1])
-    #         else:
-    #             return pygame.Rect((self.pos[0] - self.size[0] // 2) // 1, (self.pos[1] - self.size[1] // 2) // 1, 20, 25)
+    @property
+    def rect(self):
+        return pygame.Rect(self.x, self.y, self.size[0], self.size[1])
+        if self.type != 'player':
+            if not self.centered:
+                return pygame.Rect(self.pos[0] // 1, self.pos[1] // 1, self.size[0], self.size[1])
+            else:
+                return pygame.Rect((self.pos[0] - self.size[0] // 2) // 1, (self.pos[1] - self.size[1] // 2) // 1, self.size[0], self.size[1])
+        else:
+            if not self.centered:
+                return pygame.Rect(self.pos[0] // 1, self.pos[1] // 1, self.size[0], self.size[1])
+            else:
+                return pygame.Rect((self.pos[0] - self.size[0] // 2) // 1, (self.pos[1] - self.size[1] // 2) // 1, 20, 25)
 
 
 class GameObject(pygame.sprite.Sprite):
@@ -87,8 +88,10 @@ def main():
     path = "sprites\\"
 
     player_spritesheet = Spritesheet(f"{path}knight\Anomaly_anim.png")
-    player_idle = [pygame.transform.scale(player_spritesheet.get_sprite(48 * i, 0, 48, 32), (144, 96)) for i in range(6)]
-    player_rect = pygame.Rect(34, 28, 28, 36)
+    # player_idle = [pygame.transform.scale(player_spritesheet.get_sprite(48 * i + 17, 14, 48, 32), (140, 180)) for i in range(6)]
+    player_idle = [pygame.transform.scale(player_spritesheet.get_sprite(48 * i + 17, 14, 14, 18), (56, 72)) for i in range(6)]
+    player_attack = [pygame.transform.scale(player_spritesheet.get_sprite(48 * i + 15, 64 + 15, 34, 17), (136, 68)) for i in range(6)]
+    player_rect = pygame.Rect(0, 0, 42, 54)
     # print(player_idle)
     # player_idle_1 = pygame.transform.scale(player_idle_1, (128, 128))
     
@@ -99,9 +102,9 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
-        canvas.fill((255,255,255))
+        canvas.fill((70, 70, 70))
         # if player_rect.collidepoint(pygame.mouse.get_pos()):
-        pygame.draw.rect(canvas, (0, 240, 0), (51, 42, 42, 54))
+        pygame.draw.rect(canvas, (0, 240, 0), player_rect)
         # canvas.blit(player_idle_1, (0, 0))
         # canvas.blit(f_trainer[index], (16, height - 16))
         # screen.blit(canvas, (0,0))
