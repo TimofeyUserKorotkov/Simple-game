@@ -5,7 +5,7 @@ import sqlite3
 class Spritesheet:
     def __init__(self, filename):
         self.filename = filename
-        self.sprite_sheet = pygame.image.load(filename).convert()
+        self.sprite_sheet = pygame.image.load(filename).convert_alpha()
 
     def get_sprite(self, x, y, width, height):
         sprite = pygame.Surface((width, height))
@@ -87,19 +87,43 @@ class Map:
         self.tilemap = tilemap
         tile_spritesheet = Spritesheet("sprites\environment\Tileset.png")
 
-        self.rock_t_l = pygame.transform.scale(tile_spritesheet.get_sprite(48, 48, 16, 16), (48, 48))
-        self.rock_m_l = pygame.transform.scale(tile_spritesheet.get_sprite(32, 48, 16, 16), (48, 48))
-        self.rock_b_l = pygame.transform.flip(self.rock_t_l, True, False)
+        self.rock_corner = pygame.transform.rotate(pygame.transform.scale(tile_spritesheet.get_sprite(112, 0, 16, 16), (48, 48)), 270)
+        self.rock_middle = pygame.transform.scale(tile_spritesheet.get_sprite(48, 0, 16, 16), (48, 48))
 
-        self.rock_t_r = pygame.transform.scale(tile_spritesheet.get_sprite(48, 48, 16, 16), (48, 48))
-        self.rock_m_r = pygame.transform.scale(tile_spritesheet.get_sprite(32, 48, 16, 16), (48, 48))
-        self.rock_b_r = pygame.transform.flip(self.rock_t_l, True, False)
+        self.grass_middle = pygame.Surface((48, 48))
+        self.grass_middle.set_colorkey((0, 0, 0))
+        self.grass_middle.blit(self.rock_middle, (0, 0))
+        self.grass_middle.blit(pygame.transform.scale(tile_spritesheet.get_sprite(112, 32, 16, 16), (48, 48)), (0, 0))
 
-        self.rock_b = pygame.transform.scale(tile_spritesheet.get_sprite(32, 48, 16, 16), (48, 48))
-        self.rock_t = pygame.transform.scale(tile_spritesheet.get_sprite(32, 48, 16, 16), (48, 48))
+        self.objects = [pygame.transform.flip(self.rock_middle, False, True), self.rock_middle, 
+                        pygame.transform.rotate(self.rock_middle, 270), pygame.transform.rotate(self.rock_middle, 90),
+                        self.rock_corner, pygame.transform.flip(self.rock_corner, True, False),
+                        pygame.transform.flip(self.rock_corner, False, True), pygame.transform.flip(self.rock_corner, True, True), 
+                        self.grass_middle]
 
-    def generate_map(self):
-        pass
+        self.map = list()
+
+    def generate(self):
+        x, y = 0, 0
+        for i in range(1, len(self.tilemap) + 1):
+            if self.tilemap[i - 1] != 0:
+                self.map.append((self.objects[self.tilemap[i - 1] - 1], pygame.Rect(x, y, 48, 48)))
+                # print(self.tilemap[i - 1])
+                if i % 10 == 0 and i != 0:
+                    x, y = 0, y + 48
+                else:
+                    x += 48
+            else:
+                if i % 10 == 0 and i != 0:
+                    x, y = 0, y + 48
+                else:
+                    x += 48
+                    
+
+    def render(self, canvas, screen):
+        for i in range(len(self.map)):
+            canvas.blit(self.map[i][0], (self.map[i][1].x, self.map[i][1].y))
+        screen.blit(canvas, (0, 0))
 
 
 class Player(Entity):
@@ -151,6 +175,17 @@ def main():
 
     path = "sprites\\"
 
+    lvl_1 = Map([
+        [5, 1, 1, 1, 1, 1, 1, 1, 1, 6],
+        [3, 0, 0, 0, 0, 0, 0, 0, 0, 4],
+        [3, 0, 0, 0, 0, 0, 0, 0, 0, 4],
+        [3, 0, 0, 0, 0, 0, 0, 0, 0, 4],
+        [3, 9, 9, 9, 9, 9, 9, 9, 9, 4],
+        [7, 2, 2, 2, 2, 2, 2, 2, 2, 8]
+    ])
+
+    lvl_1.generate()
+
     player_spritesheet = Spritesheet(f"{path}knight\Anomaly_anim.png")
     # player_idle = [pygame.transform.scale(player_spritesheet.get_sprite(48 * i + 17, 14, 48, 32), (140, 180)) for i in range(6)]
     #* x3 ---->
@@ -175,6 +210,7 @@ def main():
         player.update()
 
         canvas.fill((125, 177, 186))
+        lvl_1.render(canvas, screen)
             # if player_rect.collidepoint(pygame.mouse.get_pos()):
         # pygame.draw.rect(canvas, (0, 240, 0), player_rect)
             # canvas.blit(player_idle_1, (0, 0))
