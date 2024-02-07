@@ -82,14 +82,29 @@ class Entity:
         return pygame.Rect(self.x, self.y, self.animation[0].get_width(), self.animation[0].get_height())
 
 
-class GameObject(pygame.sprite.Sprite):
-    def __init__(self):
-        super().__init__(self)
+class Map:
+    def __init__(self, tilemap):
+        self.tilemap = tilemap
+        tile_spritesheet = Spritesheet("sprites\environment\Tileset.png")
+
+        self.rock_t_l = pygame.transform.scale(tile_spritesheet.get_sprite(48, 48, 16, 16), (48, 48))
+        self.rock_m_l = pygame.transform.scale(tile_spritesheet.get_sprite(32, 48, 16, 16), (48, 48))
+        self.rock_b_l = pygame.transform.flip(self.rock_t_l, True, False)
+
+        self.rock_t_r = pygame.transform.scale(tile_spritesheet.get_sprite(48, 48, 16, 16), (48, 48))
+        self.rock_m_r = pygame.transform.scale(tile_spritesheet.get_sprite(32, 48, 16, 16), (48, 48))
+        self.rock_b_r = pygame.transform.flip(self.rock_t_l, True, False)
+
+        self.rock_b = pygame.transform.scale(tile_spritesheet.get_sprite(32, 48, 16, 16), (48, 48))
+        self.rock_t = pygame.transform.scale(tile_spritesheet.get_sprite(32, 48, 16, 16), (48, 48))
+
+    def generate_map(self):
+        pass
 
 
 class Player(Entity):
     def __init__(self, rect, x, y, idle, run, 
-                 attack, jump, get_damage, 
+                 attack, jump, get_damage=None, 
                  rotation=0, 
                  hp=10, 
                  damage=1, 
@@ -98,28 +113,26 @@ class Player(Entity):
         super().__init__(rect, x, y, idle, run, attack, jump, 
                          get_damage, rotation, hp, damage, speed, lvl)
 
-    def update(self, event):
+    def update(self):
+        keys = pygame.key.get_pressed()
+        mouse = pygame.mouse.get_pressed()
         if self.animation != self.attack and self.grounded:
-            if event.type == pygame.KEYDOWN:
+            if keys[pygame.K_d]:
+                self.rotation = 0
+                self.animation.clear()
+                self.animation.extend(self.run)
+            elif keys[pygame.K_a]:
+                self.rotation = 1
+                self.animation.clear()
+                self.animation.extend(self.run)
+            elif not keys[pygame.K_d] and not keys[pygame.K_a] and self.animation != self.idle:
                 self.sprite = 0
-                if event.key == pygame.K_d:
-                    self.rotation = 0
-                    self.animation.clear()
-                    self.animation.extend(self.run)
-                elif event.key == pygame.K_a:
-                    self.rotation = 1
-                    self.animation.clear()
-                    self.animation.extend(self.run)
-            elif event.type == pygame.KEYUP:
+                self.animation.clear()
+                self.animation.extend(self.idle)
+            if mouse[0]:
                 self.sprite = 0
-                if event.key == pygame.K_d or event.key == pygame.K_a:
-                    self.animation.clear()
-                    self.animation.extend(self.idle)
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                self.sprite = 0
-                if event.button == 1:
-                    self.animation.clear()
-                    self.animation.extend(self.attack)
+                self.animation.clear()
+                self.animation.extend(self.attack)
         elif not self.grounded:
             pass
             
@@ -158,7 +171,8 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
-            player.update(event)
+            # if player.rect.colliderect()
+        player.update()
 
         canvas.fill((125, 177, 186))
             # if player_rect.collidepoint(pygame.mouse.get_pos()):
