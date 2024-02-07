@@ -15,7 +15,15 @@ class Spritesheet:
 
 
 class Entity:
-    def __init__(self, rect, x, y, idle, run, attack=None, rotation=0, hp=10, damage=1, speed=30, lvl=1):
+    def __init__(self, rect, x, y, idle, run, 
+            attack=None, 
+            jump=None, 
+            get_damage=None, 
+            rotation=0, 
+            hp=10, 
+            damage=1, 
+            speed=30, 
+            lvl=1):
         rect = rect
         self.x = x
         self.y = y
@@ -30,15 +38,29 @@ class Entity:
         self.speed = speed
         self.lvl = lvl
 
+        self.grounded = True
+
         self.animation = [*idle]
         self.tick = 0
         self.sprite = 0
 
     def render(self, canvas, screen, fps):
         if self.rotation == 0:
-            canvas.blit(self.animation[self.sprite], (self.x, self.y))
+            if self.animation == self.attack:
+                canvas.blit(self.animation[self.sprite], 
+                    (self.x - self.run[0].get_width() + self.idle[0].get_width(), self.y))
+            else:
+                canvas.blit(self.animation[self.sprite], (self.x, self.y))
         elif self.rotation == 1:
-            canvas.blit(pygame.transform.flip(self.animation[self.sprite], True, False), (self.x, self.y))
+            if self.animation == self.attack:
+                canvas.blit(pygame.transform.flip(self.animation[self.sprite], True, False), 
+                    (self.x - self.attack[0].get_width() + self.run[0].get_width(), self.y))
+            elif self.animation == self.run:
+                canvas.blit(pygame.transform.flip(self.animation[self.sprite], True, False), 
+                    (self.x - self.run[0].get_width() + self.idle[0].get_width(), self.y))
+            else:
+                canvas.blit(pygame.transform.flip(self.animation[self.sprite], True, False), (self.x, self.y))
+        
         screen.blit(canvas, (0, 0))
 
         if self.tick < fps:
@@ -66,12 +88,18 @@ class GameObject(pygame.sprite.Sprite):
 
 
 class Player(Entity):
-    def __init__(self, rect, x, y, idle, run, attack, rotation=0, hp=10, damage=1, speed=30, lvl=1):
-        super().__init__(rect, x, y, idle, run, attack, rotation, hp, damage, speed, lvl)
+    def __init__(self, rect, x, y, idle, run, 
+                 attack, jump, get_damage, 
+                 rotation=0, 
+                 hp=10, 
+                 damage=1, 
+                 speed=30, 
+                 lvl=1):
+        super().__init__(rect, x, y, idle, run, attack, jump, 
+                         get_damage, rotation, hp, damage, speed, lvl)
 
     def update(self, event):
-
-        if self.animation != self.attack:
+        if self.animation != self.attack and self.grounded:
             if event.type == pygame.KEYDOWN:
                 self.sprite = 0
                 if event.key == pygame.K_d:
@@ -92,6 +120,9 @@ class Player(Entity):
                 if event.button == 1:
                     self.animation.clear()
                     self.animation.extend(self.attack)
+        elif not self.grounded:
+            pass
+            
 
 def main():
     # pygame.init()
@@ -104,21 +135,23 @@ def main():
 
     fps = 60
 
+
     path = "sprites\\"
 
     player_spritesheet = Spritesheet(f"{path}knight\Anomaly_anim.png")
     # player_idle = [pygame.transform.scale(player_spritesheet.get_sprite(48 * i + 17, 14, 48, 32), (140, 180)) for i in range(6)]
-    #* x4 ---->
-    player_idle = [pygame.transform.scale(player_spritesheet.get_sprite(48 * i + 17, 14, 14, 18), (56, 72)) for i in range(6)]
-    player_attack = [pygame.transform.scale(player_spritesheet.get_sprite(48 * i + 15, 64 + 15, 33, 17), (136, 68)) for i in range(6)]
-    player_run = [pygame.transform.scale(player_spritesheet.get_sprite(48 * i + 16, 32 + 14, 16, 18), (64, 72)) for i in range(7)]
+    #* x3 ---->
+    player_idle = [pygame.transform.scale(player_spritesheet.get_sprite(48 * i + 17, 14, 14, 18), (42, 54)) for i in range(6)]
+    player_attack = [pygame.transform.scale(player_spritesheet.get_sprite(48 * i + 15, 64 + 14, 33, 18), (99, 54)) for i in range(6)]
+    player_run = [pygame.transform.scale(player_spritesheet.get_sprite(48 * i + 16, 32 + 14, 16, 18), (48, 54)) for i in range(7)]
+    player_jump = [pygame.transform.scale(player_spritesheet.get_sprite(112, 46, 16, 18), (48, 54))]
 
 
     player_rect = pygame.Rect(0, 0, 42, 54)
     # print(player_idle)
     # player_idle_1 = pygame.transform.scale(player_idle_1, (128, 128))
     
-    player = Player(player_rect, 100, 100, player_idle, player_run, player_attack)
+    player = Player(player_rect, 100, 100, player_idle, player_run, player_attack, player_jump)
     while running:
         clock.tick(fps)
         for event in pygame.event.get():
