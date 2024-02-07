@@ -105,19 +105,13 @@ class Map:
 
     def generate(self):
         x, y = 0, 0
-        for i in range(1, len(self.tilemap) + 1):
-            if self.tilemap[i - 1] != 0:
-                self.map.append((self.objects[self.tilemap[i - 1] - 1], pygame.Rect(x, y, 48, 48)))
-                # print(self.tilemap[i - 1])
-                if i % 10 == 0 and i != 0:
-                    x, y = 0, y + 48
-                else:
-                    x += 48
-            else:
-                if i % 10 == 0 and i != 0:
-                    x, y = 0, y + 48
-                else:
-                    x += 48
+        for i in range(len(self.tilemap)):
+            for j in range(len(self.tilemap[i])):
+                if self.tilemap[i][j] != 0:
+                    print(i, j)
+                    self.map.append((self.objects[self.tilemap[i][j] - 1], pygame.Rect(x, y, 48, 48)))
+                x += 48
+            x, y = 0, y + 48
                     
 
     def render(self, canvas, screen):
