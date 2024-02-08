@@ -152,28 +152,20 @@ class Player(Entity):
 
         for i in lvl.map:
             if i[0].overlap(pygame.mask.from_surface(self.idle[0]), (self.x - i[1].x, self.y + self.velocity_y + 1 - i[1].y)) and self.velocity_y > -1:
-                # self.velocity_y = 0
                 self.grounded = True
                 if self.y % 3 != 0:
                     self.y = self.y - self.y % 3
-                # if not i[0].overlap(pygame.mask.from_surface(self.idle[0]), (self.x - i[1].x, self.y + self.velocity_y % 3 - i[1].y)):
-                #     self.y += self.velocity_y % 3
                 for j in range(int(self.velocity_y - self.velocity_y % 3)):
                     if not i[0].overlap(pygame.mask.from_surface(self.idle[0]), (self.x - i[1].x, self.y + 3 - i[1].y)):
                         self.y += 3
                     else:
                         break
-                # for j in range(int(self.velocity_y + 0.5)):
-                #     if (not i[0].overlap(pygame.mask.from_surface(self.idle[0]), (self.x - i[1].x, self.y + 3 - i[1].y)) 
-                #         and self.velocity_y % 3 == 0):
-                #         self.y += 3
-                #     elif self.velocity_y % 3 != 0:
-                #         self.y += self.velocity_y % 3
-                #     else:
-                #         break
+                self.velocity_y = 0
+            elif i[0].overlap(pygame.mask.from_surface(self.idle[0]), (self.x - i[1].x, self.y + self.velocity_y - i[1].y)):
                 self.velocity_y = 0
             # elif i[0].overlap(pygame.mask.from_surface(self.idle[0]), (self.x - i[1].x, self.y + self.velocity_y - i[1].y)):
             #     # self.velocity_y = 0
+            #     self.y = self.y - self.y % 3
             #     for j in range(int(self.velocity_y + 0.5)):
             #         if (not i[0].overlap(pygame.mask.from_surface(self.idle[0]), (self.x - i[1].x, self.y - 3 - i[1].y)) 
             #             and self.velocity_y % 3 == 0):
@@ -182,24 +174,33 @@ class Player(Entity):
             #             self.y -= self.velocity_y % 3
             #         else:
             #             break
-            #     self.velocity_y = 0
+                # self.velocity_y = 0
+            # elif i[0].overlap(pygame.mask.from_surface(self.idle[0]), (self.x - i[1].x, self.y - self.velocity_y - i[1].y)):
+            #     if self.y % 3 != 0:
+            #         self.y = self.y + 3 - self.y % 3
+            #     for j in range(int(self.velocity_y - self.velocity_y % 3)):
+            #         if not i[0].overlap(pygame.mask.from_surface(self.idle[0]), (self.x - i[1].x, self.y - 3 - i[1].y)):
+            #             self.y -= 3
+            #         else:
+            #             break
+                # self.velocity_y = 0
         self.y += self.velocity_y
 
         for i in lvl.map:
             if i[0].overlap(pygame.mask.from_surface(self.idle[0]), (self.x - self.speed - i[1].x, self.y - i[1].y)):
                 move_left = False
-                for j in range(int(self.velocity_y + 0.5)):
-                    if not i[0].overlap(pygame.mask.from_surface(self.idle[0]), (self.x + 3 - i[1].x, self.y - i[1].y)):
-                        self.x += 3
-                    else:
-                        break
+                # for j in range(int(self.velocity_y + 0.5)):
+                #     if not i[0].overlap(pygame.mask.from_surface(self.idle[0]), (self.x + 3 - i[1].x, self.y - i[1].y)):
+                #         self.x += 3
+                #     else:
+                #         break
             elif i[0].overlap(pygame.mask.from_surface(self.idle[0]), (self.x + self.speed - i[1].x, self.y - i[1].y)):
                 move_right = False
-                for j in range(int(self.velocity_y + 0.5)):
-                    if not i[0].overlap(pygame.mask.from_surface(self.idle[0]), (self.x - 3 - i[1].x, self.y - i[1].y)):
-                        self.x -= 3
-                    else:
-                        break
+                # for j in range(int(self.velocity_y + 0.5)):
+                #     if not i[0].overlap(pygame.mask.from_surface(self.idle[0]), (self.x - 3 - i[1].x, self.y - i[1].y)):
+                #         self.x -= 3
+                #     else:
+                #         break
 
 
         # for i in lvl.map:
@@ -313,7 +314,7 @@ def main():
     # print(player_idle)
     # player_idle_1 = pygame.transform.scale(player_idle_1, (128, 128))
     
-    player = Player(player_rect, 48, 48, player_idle, player_run, player_attack, player_jump)
+    player = Player(player_rect, 96, 48, player_idle, player_run, player_attack, player_jump)
 
     # player_mask = pygame.mask.from_surface(pygame.transform.scale(player_spritesheet.get_sprite(0 + 17, 14, 14, 18), (42, 54)))
     player_mask = pygame.mask.from_surface(player.idle[0])
