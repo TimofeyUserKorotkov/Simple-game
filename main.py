@@ -53,7 +53,7 @@ class Entity:
                 canvas.blit(self.animation[self.sprite], 
                     (self.x - self.run[0].get_width() + self.idle[0].get_width(), self.y))
             else:
-                canvas.blit(self.animation[self.sprite], (self.x, self.y))
+                canvas.blit(pygame.mask.from_surface(self.animation[self.sprite]).to_surface(), (self.x, self.y))
         elif self.direction == 1:
             if self.animation == self.attack:
                 canvas.blit(pygame.transform.flip(self.animation[self.sprite], True, False), 
@@ -108,6 +108,9 @@ class Map:
                         self.rock_corner, pygame.transform.flip(self.rock_corner, True, False),
                         pygame.transform.flip(self.rock_corner, False, True), pygame.transform.flip(self.rock_corner, True, True), 
                         self.grass_middle, self.rock_slant_l, self.rock_slant_r, self.rock_slant_bl, self.rock_slant_br]
+        
+        # for i in range(len(self.objects)):
+        #     self.objects[i] = pygame.mask.from_surface(self.objects[i])
 
         self.map = list()
 
@@ -116,14 +119,15 @@ class Map:
         for i in range(len(self.tilemap)):
             for j in range(len(self.tilemap[i])):
                 if self.tilemap[i][j] != 0:
-                    self.map.append((self.objects[self.tilemap[i][j] - 1], pygame.Rect(x, y, 48, 48)))
+                    self.map.append((pygame.mask.from_surface(self.objects[self.tilemap[i][j] - 1]), 
+                                     pygame.Rect(x, y, 48, 48), pygame.mask.from_surface(self.objects[self.tilemap[i][j] - 1]).to_surface()))
                 x += 48
             x, y = 0, y + 48
                     
 
     def render(self, canvas, screen):
         for i in range(len(self.map)):
-            canvas.blit(self.map[i][0], (self.map[i][1].x, self.map[i][1].y))
+            canvas.blit(self.map[i][2], (self.map[i][1].x, self.map[i][1].y))
         screen.blit(canvas, (0, 0))
 
 
@@ -147,26 +151,37 @@ class Player(Entity):
         self.grounded = False
 
         for i in lvl.map:
-            if i[1].colliderect(self.x, self.y + self.velocity_y + 1, 
-                                self.idle[0].get_width(), self.animation[0].get_height()) and self.velocity_y > -1:
+            if i[0].overlap(pygame.mask.from_surface(self.jump[0]), (self.x, self.y + self.velocity_y + 1)) and self.velocity_y > -1:
                 self.velocity_y = 0
                 self.grounded = True
                 self.y = i[1].y - self.animation[0].get_height()
-            elif i[1].colliderect(self.x, self.y + self.velocity_y, 
-                                self.idle[0].get_width(), self.animation[0].get_height()):
+            elif i[0].overlap(pygame.mask.from_surface(self.jump[0]), (self.x, self.y + self.velocity_y)):
                 self.velocity_y = 0
                 self.y = i[1].y + i[1].height
         self.y += self.velocity_y
 
-        for i in lvl.map:
-            if i[1].colliderect(self.x - self.speed, self.y, self.idle[0].get_width(), 
-                                self.animation[0].get_height()):
-                move_left = False
-                self.x = i[1].x + i[1].width
-            elif i[1].colliderect(self.x + self.speed, self.y, self.idle[0].get_width(), 
-                                  self.animation[0].get_height()):
-                move_right = False
-                self.x = i[1].x - self.idle[0].get_width()
+
+        # for i in lvl.map:
+        #     if i[1].colliderect(self.x, self.y + self.velocity_y + 1, 
+        #                         self.idle[0].get_width(), self.animation[0].get_height()) and self.velocity_y > -1:
+        #         self.velocity_y = 0
+        #         self.grounded = True
+        #         self.y = i[1].y - self.animation[0].get_height()
+        #     elif i[1].colliderect(self.x, self.y + self.velocity_y, 
+        #                         self.idle[0].get_width(), self.animation[0].get_height()):
+        #         self.velocity_y = 0
+        #         self.y = i[1].y + i[1].height
+        # self.y += self.velocity_y
+
+        # for i in lvl.map:
+        #     if i[1].colliderect(self.x - self.speed, self.y, self.idle[0].get_width(), 
+        #                         self.animation[0].get_height()):
+        #         move_left = False
+        #         self.x = i[1].x + i[1].width
+        #     elif i[1].colliderect(self.x + self.speed, self.y, self.idle[0].get_width(), 
+        #                           self.animation[0].get_height()):
+        #         move_right = False
+        #         self.x = i[1].x - self.idle[0].get_width()
 
         if ((self.direction == 0 and not move_right or self.direction == 1 and not move_left) 
             and self.animation == self.run):
@@ -198,7 +213,7 @@ class Player(Entity):
                 self.animation.extend(self.attack)
 
         elif not self.grounded:
-            self.velocity_y += 0.5
+            self.velocity_y += 0.001
             self.sprite = 0
             self.animation.clear()
             self.animation.extend(self.jump)
@@ -223,6 +238,9 @@ def main():
 
     fps = 120
 
+    bullet = pygame.Surface((10, 10))
+    bullet.fill((255, 0, 0))
+    bullet_mask = pygame.mask.from_surface(bullet)
 
     path = "sprites\\"
 
@@ -255,6 +273,11 @@ def main():
     # player_idle_1 = pygame.transform.scale(player_idle_1, (128, 128))
     
     player = Player(player_rect, 100, 100, player_idle, player_run, player_attack, player_jump)
+
+    # player_mask = pygame.mask.from_surface(pygame.transform.scale(player_spritesheet.get_sprite(0 + 17, 14, 14, 18), (42, 54)))
+    player_mask = pygame.mask.from_surface(player.idle[0])
+    # player_img = player_mask.to_surface()
+
     while running:
         clock.tick(fps)
         for event in pygame.event.get():
@@ -263,6 +286,13 @@ def main():
 
             # if player.rect.colliderect()
         player.update(lvl_1)
+
+        pos = pygame.mouse.get_pos()
+
+        if player_mask.overlap(bullet_mask, (pos[0] - player.x, pos[1] - player.y)):
+            bullet.fill((0, 255, 0))
+        else:
+            bullet.fill((255, 0, 0))
 
         canvas.fill((125, 177, 186))
         lvl_1.render(canvas, screen)
@@ -273,6 +303,13 @@ def main():
             # screen.blit(canvas, (0,0))
         player.render(canvas, screen, fps)
         screen.blit(pygame.font.SysFont(None, 24).render(f"{int(clock.get_fps())}", True, (250, 177, 186)), (20, 10))
+
+        # screen.blit(player_img, (0, 0))
+
+
+        screen.blit(bullet, pos)
+        
+
         pygame.display.flip()
 
 
