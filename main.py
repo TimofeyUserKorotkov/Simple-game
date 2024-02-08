@@ -19,7 +19,7 @@ class Entity:
             attack=None, 
             jump=None, 
             get_damage=None, 
-            rotation=0, 
+            direction=0, 
             hp=10, 
             damage=1, 
             speed=30, 
@@ -33,7 +33,7 @@ class Entity:
         self.attack = attack
         self.jump = jump
 
-        self.rotation = rotation
+        self.direction = direction
         self.hp = hp
         self.damage = damage
         self.speed = speed
@@ -48,13 +48,13 @@ class Entity:
         self.sprite = 0
 
     def render(self, canvas, screen, fps):
-        if self.rotation == 0:
+        if self.direction == 0:
             if self.animation == self.attack:
                 canvas.blit(self.animation[self.sprite], 
                     (self.x - self.run[0].get_width() + self.idle[0].get_width(), self.y))
             else:
                 canvas.blit(self.animation[self.sprite], (self.x, self.y))
-        elif self.rotation == 1:
+        elif self.direction == 1:
             if self.animation == self.attack:
                 canvas.blit(pygame.transform.flip(self.animation[self.sprite], True, False), 
                     (self.x - self.attack[0].get_width() + self.run[0].get_width(), self.y))
@@ -126,50 +126,106 @@ class Map:
 class Player(Entity):
     def __init__(self, rect, x, y, idle, run, 
                  attack, jump=None, get_damage=None, 
-                 rotation=0, 
+                 direction=0, 
                  hp=10, 
                  damage=1, 
                  speed=3, 
                  lvl=1):
         super().__init__(rect, x, y, idle, run, attack, jump, 
-                         get_damage, rotation, hp, damage, speed, lvl)
+                         get_damage, direction, hp, damage, speed, lvl)
+
+    # def update(self, lvl):
+    #     keys = pygame.key.get_pressed()
+    #     mouse = pygame.mouse.get_pressed()
+    #     for i in lvl.map:
+    #         if i[1].colliderect(self.x, self.y + self.velocity_y, 
+    #                             self.animation[0].get_width(), self.animation[0].get_height()):
+    #             self.velocity_y = 0
+    #             self.grounded = True
+    #             self.y = i[1].y - self.animation[0].get_height()
+    #     self.y += self.velocity_y
+
+    #     if self.animation != self.attack:
+    #         if keys[pygame.K_d]:
+    #             self.rotation = 0
+    #             move = True
+    #             for i in lvl.map:
+    #                 if i[1].colliderect(self.x + self.speed, self.y, 
+    #                                 self.animation[0].get_width(), self.animation[0].get_height()):
+    #                     self.x = i[1].x - self.animation[0].get_width()
+    #                     move = False
+    #             if move:
+    #                 self.x += self.speed
+    #         elif keys[pygame.K_a]:
+    #             self.rotation = 1
+    #             self.x -= self.speed
+    #     if self.animation != self.attack and self.grounded:
+    #         if keys[pygame.K_d] or keys[pygame.K_a]:
+                
+    #             self.animation.clear()
+    #             self.animation.extend(self.run)
+    #         #     self.x += self.speed
+    #         # elif keys[pygame.K_a]:
+    #         #     self.rotation = 1
+    #         #     self.animation.clear()
+    #         #     self.animation.extend(self.run)
+    #         #     self.x -= self.speed
+    #         elif not keys[pygame.K_d] and not keys[pygame.K_a] and self.animation != self.idle:
+    #             self.sprite = 0
+    #             self.animation.clear()
+    #             self.animation.extend(self.idle)
+    #         if keys[pygame.K_SPACE]:
+    #             self.sprite = 0
+    #             self.velocity_y = -10
+    #             self.jumping = True
+    #             self.grounded = False
+    #             self.animation.clear()
+    #             self.animation.extend(self.jump)
+    #         if not keys[pygame.K_SPACE]:
+    #             self.jumping = False
+    #         if mouse[0]:
+    #             self.sprite = 0
+    #             self.animation.clear()
+    #             self.animation.extend(self.attack)
+    #     elif not self.grounded:
+    #         self.velocity_y += 1
+    #         self.sprite = 0
+    #         self.animation.clear()
+    #         self.animation.extend(self.jump)
 
     def update(self, lvl):
         keys = pygame.key.get_pressed()
         mouse = pygame.mouse.get_pressed()
+        
+        move_right = True
+        move_left = True
+        self.grounded = False
+
         for i in lvl.map:
-            if i[1].colliderect(self.x, self.y + self.velocity_y, 
-                                self.animation[0].get_width(), self.animation[0].get_height()):
+            if i[1].colliderect(self.x, self.y + self.velocity_y + 1, 
+                                self.idle[0].get_width(), self.animation[0].get_height()):
                 self.velocity_y = 0
                 self.grounded = True
                 self.y = i[1].y - self.animation[0].get_height()
         self.y += self.velocity_y
 
-        if self.animation != self.attack:
-            if keys[pygame.K_d]:
-                self.rotation = 0
-                move = True
-                for i in lvl.map:
-                    if i[1].colliderect(self.x + self.speed, self.y, 
-                                    self.animation[0].get_width(), self.animation[0].get_height()):
-                        self.x = i[1].x - self.animation[0].get_width()
-                        move = False
-                if move:
-                    self.x += self.speed
-            elif keys[pygame.K_a]:
-                self.rotation = 1
-                self.x -= self.speed
+        for i in lvl.map:
+            if i[1].colliderect(self.x - self.speed, self.y, self.idle[0].get_width(), 
+                                self.animation[0].get_height()):
+                move_left = False
+                self.x = i[1].x + i[1].width
+            elif i[1].colliderect(self.x + self.speed, self.y, self.idle[0].get_width(), 
+                                  self.animation[0].get_height()):
+                move_right = False
+                self.x = i[1].x - self.idle[0].get_width()
+
         if self.animation != self.attack and self.grounded:
-            if keys[pygame.K_d] or keys[pygame.K_a]:
-                
+            if keys[pygame.K_d] and move_right:
                 self.animation.clear()
                 self.animation.extend(self.run)
-            #     self.x += self.speed
-            # elif keys[pygame.K_a]:
-            #     self.rotation = 1
-            #     self.animation.clear()
-            #     self.animation.extend(self.run)
-            #     self.x -= self.speed
+            elif keys[pygame.K_a] and move_left:
+                self.animation.clear()
+                self.animation.extend(self.run)
             elif not keys[pygame.K_d] and not keys[pygame.K_a] and self.animation != self.idle:
                 self.sprite = 0
                 self.animation.clear()
@@ -187,11 +243,34 @@ class Player(Entity):
                 self.sprite = 0
                 self.animation.clear()
                 self.animation.extend(self.attack)
+
         elif not self.grounded:
             self.velocity_y += 1
             self.sprite = 0
             self.animation.clear()
             self.animation.extend(self.jump)
+
+        #* for i in lvl.map:
+        #     if i[1].colliderect(self.x - self.speed, self.y, 
+        #                         self.animation[0].get_width(), self.animation[0].get_height()):
+        #         move_left = False
+        #         self.x = i[1].x + i[1].width
+        #     elif i[1].colliderect(self.x + self.speed, self.y, 
+        #                         self.animation[0].get_width(), self.animation[0].get_height()):
+        #         move_right = False
+        #         self.x = i[1].x - self.animation[0].get_width()
+            # if i[1].colliderect(self.x - self.speed, self.y, 
+            #                     self.animation[0].get_width(), self.animation[0].get_height()):
+            #     move_left = False
+            #     self.x = i[1].x + i[1].width
+                
+        if self.animation != self.attack:
+            if keys[pygame.K_d] and move_right:
+                self.direction = 0
+                self.x += self.speed
+            elif keys[pygame.K_a] and move_left:
+                self.direction = 1
+                self.x -= self.speed
             
 
 def main():
