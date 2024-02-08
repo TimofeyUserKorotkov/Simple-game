@@ -111,7 +111,7 @@ class Map:
         for i in range(len(self.tilemap)):
             for j in range(len(self.tilemap[i])):
                 if self.tilemap[i][j] != 0:
-                    print(i, j)
+                    # print(i, j)
                     self.map.append((self.objects[self.tilemap[i][j] - 1], pygame.Rect(x, y, 48, 48)))
                 x += 48
             x, y = 0, y + 48
@@ -144,10 +144,14 @@ class Player(Entity):
 
         for i in lvl.map:
             if i[1].colliderect(self.x, self.y + self.velocity_y + 1, 
-                                self.idle[0].get_width(), self.animation[0].get_height()):
+                                self.idle[0].get_width(), self.animation[0].get_height()) and self.velocity_y > -1:
                 self.velocity_y = 0
                 self.grounded = True
                 self.y = i[1].y - self.animation[0].get_height()
+            elif i[1].colliderect(self.x, self.y + self.velocity_y, 
+                                self.idle[0].get_width(), self.animation[0].get_height()):
+                self.velocity_y = 0
+                self.y = i[1].y + i[1].height
         self.y += self.velocity_y
 
         for i in lvl.map:
@@ -160,14 +164,18 @@ class Player(Entity):
                 move_right = False
                 self.x = i[1].x - self.idle[0].get_width()
 
+        if ((self.direction == 0 and not move_right or self.direction == 1 and not move_left) 
+            and self.animation == self.run):
+            self.sprite = 0
+            self.animation.clear()
+            self.animation.extend(self.idle)
+
         if self.animation != self.attack and self.grounded:
-            if keys[pygame.K_d] and move_right:
+            if (keys[pygame.K_d] and move_right) or (keys[pygame.K_a] and move_left):
                 self.animation.clear()
                 self.animation.extend(self.run)
-            elif keys[pygame.K_a] and move_left:
-                self.animation.clear()
-                self.animation.extend(self.run)
-            elif not keys[pygame.K_d] and not keys[pygame.K_a] and self.animation != self.idle:
+            elif ((not keys[pygame.K_d] and not keys[pygame.K_a] and self.animation != self.idle) 
+                  or self.animation == self.jump):
                 self.sprite = 0
                 self.animation.clear()
                 self.animation.extend(self.idle)
@@ -186,7 +194,7 @@ class Player(Entity):
                 self.animation.extend(self.attack)
 
         elif not self.grounded:
-            self.velocity_y += 1
+            self.velocity_y += 0.5
             self.sprite = 0
             self.animation.clear()
             self.animation.extend(self.jump)
@@ -202,25 +210,29 @@ class Player(Entity):
 
 def main():
     # pygame.init()
-    width, height = 1000, 500
+    width, height = 960, 480
     canvas = pygame.Surface((width, height))
     screen = pygame.display.set_mode((width, height))
     running = True
 
     clock = pygame.time.Clock()
 
-    fps = 60
+    fps = 120
 
 
     path = "sprites\\"
 
     lvl_1 = Map([
-        [5, 1, 1, 1, 1, 1, 1, 1, 1, 6],
-        [3, 0, 0, 0, 0, 0, 0, 0, 0, 4],
-        [3, 0, 0, 0, 0, 0, 0, 0, 0, 4],
-        [3, 0, 0, 0, 0, 0, 0, 0, 0, 4],
-        [3, 9, 9, 9, 9, 9, 9, 9, 9, 4],
-        [7, 2, 2, 2, 2, 2, 2, 2, 2, 8]
+        [5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6],
+        [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4],
+        [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4],
+        [3, 9, 9, 9, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4],
+        [3, 0, 0, 0, 0, 9, 0, 0, 9, 9, 9, 0, 9, 9, 9, 9, 0, 0, 0, 4],
+        [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4],
+        [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4],
+        [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4],
+        [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4],
+        [7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 8]
     ])
 
     lvl_1.generate()
@@ -256,6 +268,7 @@ def main():
             # canvas.blit(f_trainer[index], (16, height - 16))
             # screen.blit(canvas, (0,0))
         player.render(canvas, screen, fps)
+        screen.blit(pygame.font.SysFont(None, 24).render(f"{int(clock.get_fps())}", True, (250, 177, 186)), (20, 10))
         pygame.display.flip()
 
 
