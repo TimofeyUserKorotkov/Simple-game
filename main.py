@@ -22,7 +22,7 @@ class Entity:
             direction=0, 
             hp=10, 
             damage=1, 
-            speed=30, 
+            speed=3, 
             lvl=1):
         rect = rect
         self.x = x
@@ -98,11 +98,16 @@ class Map:
         self.grass_middle.blit(self.rock_middle, (0, 0))
         self.grass_middle.blit(pygame.transform.scale(tile_spritesheet.get_sprite(112, 32, 16, 16), (48, 48)), (0, 0))
 
+        self.rock_slant_l = pygame.transform.scale(tile_spritesheet.get_sprite(0, 0, 16, 16), (48, 48))
+        self.rock_slant_r = pygame.transform.scale(tile_spritesheet.get_sprite(32, 0, 16, 16), (48, 48))
+        self.rock_slant_bl = pygame.transform.scale(tile_spritesheet.get_sprite(0, 32, 16, 16), (48, 48))
+        self.rock_slant_br = pygame.transform.scale(tile_spritesheet.get_sprite(32, 32, 16, 16), (48, 48))
+
         self.objects = [pygame.transform.flip(self.rock_middle, False, True), self.rock_middle, 
                         pygame.transform.rotate(self.rock_middle, 270), pygame.transform.rotate(self.rock_middle, 90),
                         self.rock_corner, pygame.transform.flip(self.rock_corner, True, False),
                         pygame.transform.flip(self.rock_corner, False, True), pygame.transform.flip(self.rock_corner, True, True), 
-                        self.grass_middle]
+                        self.grass_middle, self.rock_slant_l, self.rock_slant_r, self.rock_slant_bl, self.rock_slant_br]
 
         self.map = list()
 
@@ -111,7 +116,6 @@ class Map:
         for i in range(len(self.tilemap)):
             for j in range(len(self.tilemap[i])):
                 if self.tilemap[i][j] != 0:
-                    # print(i, j)
                     self.map.append((self.objects[self.tilemap[i][j] - 1], pygame.Rect(x, y, 48, 48)))
                 x += 48
             x, y = 0, y + 48
@@ -129,7 +133,7 @@ class Player(Entity):
                  direction=0, 
                  hp=10, 
                  damage=1, 
-                 speed=3, 
+                 speed=2, 
                  lvl=1):
         super().__init__(rect, x, y, idle, run, attack, jump, 
                          get_damage, direction, hp, damage, speed, lvl)
@@ -226,12 +230,12 @@ def main():
         [5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6],
         [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4],
         [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4],
-        [3, 9, 9, 9, 9, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 9, 0, 0, 0, 4],
-        [3, 0, 0, 0, 0, 9, 0, 0, 9, 9, 9, 0, 0, 0, 0, 0, 0, 0, 0, 4],
-        [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 4],
-        [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 9, 9, 0, 0, 0, 0, 4],
-        [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 4],
-        [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 4],
+        [3, 10, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 9, 0, 0, 0, 4],
+        [3, 12, 13, 0, 10, 11, 0, 0, 9, 9, 9, 0, 0, 0, 0, 0, 0, 0, 0, 4],
+        [3, 0, 0, 0, 12, 13, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 4],
+        [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 9, 9, 9, 0, 0, 0, 4],
+        [3, 0, 10, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 4],
+        [3, 0, 12, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 4],
         [7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 8]
     ])
 
