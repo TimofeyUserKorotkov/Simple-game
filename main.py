@@ -190,20 +190,6 @@ class Player(Entity):
             self.sprite = 0
             self.animation.clear()
             self.animation.extend(self.jump)
-
-        #* for i in lvl.map:
-        #     if i[1].colliderect(self.x - self.speed, self.y, 
-        #                         self.animation[0].get_width(), self.animation[0].get_height()):
-        #         move_left = False
-        #         self.x = i[1].x + i[1].width
-        #     elif i[1].colliderect(self.x + self.speed, self.y, 
-        #                         self.animation[0].get_width(), self.animation[0].get_height()):
-        #         move_right = False
-        #         self.x = i[1].x - self.animation[0].get_width()
-            # if i[1].colliderect(self.x - self.speed, self.y, 
-            #                     self.animation[0].get_width(), self.animation[0].get_height()):
-            #     move_left = False
-            #     self.x = i[1].x + i[1].width
                 
         if self.animation != self.attack:
             if keys[pygame.K_d] and move_right:
