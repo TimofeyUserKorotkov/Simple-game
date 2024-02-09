@@ -388,7 +388,7 @@ def main():
         # screen.blit(player_img, (0, 0))
 
 
-        screen.blit(bullet, pos)
+        # screen.blit(bullet, pos)
         
 
         pygame.display.flip()
