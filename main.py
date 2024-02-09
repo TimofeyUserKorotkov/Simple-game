@@ -152,6 +152,8 @@ class Player(Entity):
         move_left = True
         self.grounded = False
 
+        velocity_0 = False
+
         for i in lvl.map:
             if i[0].overlap(pygame.mask.from_surface(self.idle[0]), (self.x - i[1].x, self.y + self.velocity_y + 1 - i[1].y)) and self.velocity_y > -1:
                 self.grounded = True
@@ -162,7 +164,8 @@ class Player(Entity):
                         self.y += 3
                     else:
                         break
-                self.velocity_y = 0
+                velocity_0 = True
+                print(1)
             elif i[0].overlap(pygame.mask.from_surface(self.idle[0]), (self.x - i[1].x, self.y + self.velocity_y - i[1].y)):
                 self.velocity_y = 0
             # elif i[0].overlap(pygame.mask.from_surface(self.idle[0]), (self.x - i[1].x, self.y + self.velocity_y - i[1].y)):
@@ -232,8 +235,8 @@ class Player(Entity):
                 #     else:
                 #         break
                     
-        if not move_left and not move_right:
-            self.y -= 3
+        # if not move_left and not move_right:
+        #     self.y -= 3
 
 
         # for i in lvl.map:
