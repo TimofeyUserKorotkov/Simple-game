@@ -128,6 +128,22 @@ class Map:
         screen.blit(canvas, (0, 0))
 
 
+class Eye(Entity):
+    def __init__(self, rect, x, y, idle, run, 
+            attack=None, 
+            jump=None, 
+            get_damage=None, 
+            direction=0, 
+            hp=10, 
+            damage=1, 
+            speed=3, 
+            lvl=1):
+        super().__init__(rect, x, y, idle, run, attack, jump, 
+                         get_damage, direction, hp, damage, speed, lvl)
+    def fly(self):
+        pass
+        
+
 class Player(Entity):
     def __init__(self, rect, x, y, idle, run, 
                  attack, jump=None, get_damage=None, 
