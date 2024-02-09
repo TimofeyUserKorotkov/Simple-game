@@ -152,24 +152,24 @@ class Player(Entity):
         move_left = True
         self.grounded = False
 
+        if self.direction == 0:
+            zero_frame = pygame.mask.from_surface(self.idle[0])
+        else:
+            zero_frame = pygame.mask.from_surface(pygame.transform.flip(self.idle[0], True, False))
+
         for i in lvl.map:
-            if self.direction == 0:
-                zero_frame = pygame.mask.from_surface(self.idle[0])
-            else:
-                zero_frame = pygame.mask.from_surface(pygame.transform.flip(self.idle[0], True, False))
-                
-            if i[0].overlap(pygame.mask.from_surface(self.idle[0]), (self.x - i[1].x, self.y + self.velocity_y + 1 - i[1].y)) and self.velocity_y > -1:
+            if i[0].overlap(zero_frame, (self.x - i[1].x, self.y + self.velocity_y + 1 - i[1].y)) and self.velocity_y > -1:
                 self.grounded = True
                 if self.y % 3 != 0:
                     self.y = self.y - self.y % 3
                 for j in range(int(self.velocity_y + 0.5)):
-                    if not i[0].overlap(pygame.mask.from_surface(self.idle[0]), (self.x - i[1].x, self.y + 3 - i[1].y)):
+                    if not i[0].overlap(zero_frame, (self.x - i[1].x, self.y + 3 - i[1].y)):
                         self.y += 3
                     else:
                         break
                 self.velocity_y = 0
-                print(1)
-            elif i[0].overlap(pygame.mask.from_surface(self.idle[0]), (self.x - i[1].x, self.y + self.velocity_y - i[1].y)):
+                # print(1)
+            elif i[0].overlap(zero_frame, (self.x - i[1].x, self.y + self.velocity_y - i[1].y)):
                 self.velocity_y = 0
             # elif i[0].overlap(pygame.mask.from_surface(self.idle[0]), (self.x - i[1].x, self.y + self.velocity_y - i[1].y)):
             #     # self.velocity_y = 0
@@ -195,11 +195,11 @@ class Player(Entity):
         self.y += self.velocity_y
 
         for i in lvl.map:
-            if i[0].overlap(pygame.mask.from_surface(self.idle[0]), (self.x - self.speed - i[1].x, self.y - i[1].y)):
+            if i[0].overlap(zero_frame, (self.x - self.speed - i[1].x, self.y - i[1].y)):
                 for j in range(self.step_size):
                     do = True
                     for i in lvl.map:
-                        if i[0].overlap(pygame.mask.from_surface(self.idle[0]), (self.x - self.speed - i[1].x, self.y - 3 * (j + 1) - i[1].y)):
+                        if i[0].overlap(zero_frame, (self.x - self.speed - i[1].x, self.y - 3 * (j + 1) - i[1].y)):
                             do = False
                     if do and keys[pygame.K_a]:
                         self.y -= 3 * (j + 1)
@@ -212,11 +212,11 @@ class Player(Entity):
                 #     else:
                 #         break
                     
-            elif i[0].overlap(pygame.mask.from_surface(self.idle[0]), (self.x + self.speed - i[1].x, self.y - i[1].y)):
+            elif i[0].overlap(zero_frame, (self.x + self.speed - i[1].x, self.y - i[1].y)):
                 for j in range(self.step_size):
                     do = True
                     for i in lvl.map:
-                        if i[0].overlap(pygame.mask.from_surface(self.idle[0]), (self.x + self.speed - i[1].x, self.y - 3 * (j + 1) - i[1].y)):
+                        if i[0].overlap(zero_frame, (self.x + self.speed - i[1].x, self.y - 3 * (j + 1) - i[1].y)):
                             do = False
                     if do and keys[pygame.K_d]:
                         self.y -= 3 * (j + 1)
@@ -238,8 +238,8 @@ class Player(Entity):
                 #     else:
                 #         break
                     
-        # if not move_left and not move_right:
-        #     self.y -= 3
+        if not move_left and not move_right:
+            self.y -= 3
 
 
         # for i in lvl.map:
