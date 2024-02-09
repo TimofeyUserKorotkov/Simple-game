@@ -319,7 +319,7 @@ def main():
 
     fps = 120
 
-    bullet = pygame.Surface((10, 10))
+    bullet = pygame.Surface((18, 24))
     bullet.fill((255, 0, 0))
     bullet_mask = pygame.mask.from_surface(bullet)
 
