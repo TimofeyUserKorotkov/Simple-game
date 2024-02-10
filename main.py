@@ -128,7 +128,7 @@ class Map:
         screen.blit(canvas, (0, 0))
 
 
-class Eye(Entity):
+class Spiny(Entity):
     def __init__(self, rect, x, y, idle, run, 
             attack=None, 
             jump=None, 
@@ -136,12 +136,70 @@ class Eye(Entity):
             direction=0, 
             hp=10, 
             damage=1, 
-            speed=3, 
+            speed=1, 
             lvl=1):
         super().__init__(rect, x, y, idle, run, attack, jump, 
                          get_damage, direction, hp, damage, speed, lvl)
-    def fly(self):
-        pass
+    def walk(self, lvl):
+        self.grounded = False
+
+        if self.direction == 0:
+            zero_frame = pygame.mask.from_surface(self.idle[0])
+        else:
+            zero_frame = pygame.mask.from_surface(pygame.transform.flip(self.idle[0], True, False))
+        
+        for i in lvl.map:
+            if i[0].overlap(zero_frame, (self.x - i[1].x, self.y + self.velocity_y + 1 - i[1].y)):
+                self.grounded = True
+                if self.y % 3 != 0:
+                    self.y = self.y - self.y % 3
+                for j in range(int(self.velocity_y + 0.5)):
+                    if not i[0].overlap(zero_frame, (self.x - i[1].x, self.y + 3 - i[1].y)):
+                        self.y += 3
+                    else:
+                        break
+                self.velocity_y = 0
+            elif i[0].overlap(zero_frame, (self.x - i[1].x, self.y + self.velocity_y - i[1].y)):
+                self.velocity_y = 0
+        self.y += self.velocity_y
+
+        for i in lvl.map:
+            if i[0].overlap(zero_frame, (self.x - self.speed - i[1].x, self.y - i[1].y)):
+                self.direction = 0
+                self.x += 80
+            elif i[0].overlap(zero_frame, (self.x + self.speed - i[1].x, self.y - i[1].y)):
+                self.direction = 1
+                self.x -= 80
+
+        do = -1
+
+        for i in lvl.map:
+            if not i[0].overlap(zero_frame, (self.x + zero_frame.to_surface().get_width() - i[1].x, self.y + 1 - i[1].y)) and self.direction == 1:
+                do = 0
+                break
+            elif not i[0].overlap(zero_frame, (self.x - zero_frame.to_surface().get_width() + 80 - i[1].x, self.y + 1 - i[1].y)) and self.direction == 0:
+                do = 1
+                break
+            else:
+                continue
+        
+        if do == 0:
+            self.direction = 0
+            self.x += 80
+        elif do == 1:
+            self.direction = 1
+            self.x -= 80
+
+        if self.direction == 0:
+            self.x += self.speed
+        elif self.direction == 1:
+            self.x -= self.speed
+
+        if not self.grounded:
+            self.velocity_y += 0.5
+            self.sprite = 0
+            self.animation.clear()
+            self.animation.extend(self.idle)
         
 
 class Player(Entity):
@@ -287,9 +345,15 @@ def main():
     player_run = [pygame.transform.scale(player_spritesheet.get_sprite(48 * i + 16, 32 + 14, 16, 18), (48, 54)) for i in range(7)]
     player_jump = [pygame.transform.scale(player_spritesheet.get_sprite(112, 46, 16, 18), (48, 54))]
 
+    spiny_idle_spritesheet = Spritesheet(f"{path}spiny\idle.png")
+    spiny_run_spritesheet = Spritesheet(f"{path}spiny\walk.png")
+    spine_idle = [pygame.transform.scale(spiny_idle_spritesheet.get_sprite(40 * i + 8, 13, 40, 40), (120, 120)) for i in range(7)]
+    spiny_run = [pygame.transform.scale(spiny_run_spritesheet.get_sprite(40 * i, 0, 40, 40), (120, 120)) for i in range(8)]
     player_rect = pygame.Rect(0, 0, 42, 54)
     
     player = Player(player_rect, 96, 48, player_idle, player_run, player_attack, player_jump)
+
+    spiny = Spiny(pygame.Rect(0, 0, 40, 40), 700, 200, spiny_run, spiny_run)
 
     while running:
         clock.tick(fps)
@@ -298,11 +362,13 @@ def main():
                 running = False
 
         player.update(lvl_1)
+        spiny.walk(lvl_1)
 
         canvas.fill((125, 177, 186))
         lvl_1.render(canvas, screen)
 
         player.render(canvas, screen, fps)
+        spiny.render(canvas, screen, fps)
         screen.blit(pygame.font.SysFont(None, 24).render(f"{int(clock.get_fps())}", True, (250, 177, 186)), (20, 10))
 
         pygame.display.flip()
