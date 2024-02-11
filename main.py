@@ -79,21 +79,21 @@ class Entity:
         else:
             if self.direction == 0:
                 if self.animation == self.attack:
-                    canvas.blit(self.animation[self.sprite], 
+                    screen.blit(self.animation[self.sprite], 
                         (self.x - self.run[0].get_width() + self.idle[0].get_width(), self.y))
                 else:
-                    canvas.blit(self.animation[self.sprite], (self.x, self.y))
+                    screen.blit(self.animation[self.sprite], (self.x, self.y))
             elif self.direction == 1:
                 if self.animation == self.attack:
-                    canvas.blit(pygame.transform.flip(self.animation[self.sprite], True, False), 
+                    screen.blit(pygame.transform.flip(self.animation[self.sprite], True, False), 
                         (self.x - self.attack[0].get_width() + self.run[0].get_width(), self.y))
                 elif self.animation == self.run:
-                    canvas.blit(pygame.transform.flip(self.animation[self.sprite], True, False), 
+                    screen.blit(pygame.transform.flip(self.animation[self.sprite], True, False), 
                         (self.x - self.run[0].get_width() + self.idle[0].get_width(), self.y))
                 else:
-                    canvas.blit(pygame.transform.flip(self.animation[self.sprite], True, False), (self.x, self.y))
+                    screen.blit(pygame.transform.flip(self.animation[self.sprite], True, False), (self.x, self.y))
 
-            screen.blit(canvas, (0, 0))
+            # screen.blit(canvas, (0, 0))
 
         if self.tick < fps:
             self.tick += 1
@@ -154,7 +154,8 @@ class Map:
     def render(self, canvas, screen, player):
         for i in range(len(self.map)):
             canvas.blit(self.map[i][2], (self.map[i][1].x, self.map[i][1].y))
-        screen.blit(canvas, (player.x, player.y))
+        screen.blit(canvas, (-player.x + screen.get_width() // 2 - player.idle[0].get_width(), 
+                             -player.y + screen.get_height() // 2 - player.idle[0].get_height()))
 
 
 class Spiny(Entity):
@@ -395,6 +396,7 @@ def main():
         spiny.walk(lvl_1)
 
         canvas.fill((125, 177, 186))
+        screen.fill((125, 177, 186))
         lvl_1.render(canvas, screen, player)
 
         spiny.render(canvas, screen, fps)
