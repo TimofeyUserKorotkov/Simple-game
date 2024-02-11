@@ -23,7 +23,8 @@ class Entity:
             hp=10, 
             damage=1, 
             speed=3, 
-            lvl=1):
+            lvl=1,
+            entity_type=None):
         rect = rect
         self.x = x
         self.y = y
@@ -38,6 +39,7 @@ class Entity:
         self.damage = damage
         self.speed = speed
         self.lvl = lvl
+        self.entity_type = entity_type
 
         self.jumping = False
         self.grounded = False
@@ -48,23 +50,50 @@ class Entity:
         self.sprite = 0
 
     def render(self, canvas, screen, fps):
-        if self.direction == 0:
-            if self.animation == self.attack:
-                canvas.blit(self.animation[self.sprite], 
-                    (self.x - self.run[0].get_width() + self.idle[0].get_width(), self.y))
-            else:
-                canvas.blit(self.animation[self.sprite], (self.x, self.y))
-        elif self.direction == 1:
-            if self.animation == self.attack:
-                canvas.blit(pygame.transform.flip(self.animation[self.sprite], True, False), 
-                    (self.x - self.attack[0].get_width() + self.run[0].get_width(), self.y))
-            elif self.animation == self.run:
-                canvas.blit(pygame.transform.flip(self.animation[self.sprite], True, False), 
-                    (self.x - self.run[0].get_width() + self.idle[0].get_width(), self.y))
-            else:
-                canvas.blit(pygame.transform.flip(self.animation[self.sprite], True, False), (self.x, self.y))
-        
-        screen.blit(canvas, (0, 0))
+        if self.entity_type == "player":
+            if self.direction == 0:
+                if self.animation == self.attack:
+                    screen.blit(self.animation[self.sprite], (screen.get_width() // 2 - self.idle[0].get_width() - 
+                                                              self.run[0].get_width() + self.idle[0].get_width(), 
+                                                              screen.get_height() // 2 - self.idle[0].get_height()))
+                else:
+                    screen.blit(self.animation[self.sprite], (screen.get_width() // 2 - self.idle[0].get_width(), 
+                                                              screen.get_height() // 2 - self.idle[0].get_height()))
+            elif self.direction == 1:
+                if self.animation == self.attack:
+                    # screen.blit(pygame.transform.flip(self.animation[self.sprite], True, False), 
+                    #     (self.x - self.attack[0].get_width() + self.run[0].get_width(), self.y))
+                    screen.blit(pygame.transform.flip(self.animation[self.sprite], True, False), 
+                                (screen.get_width() // 2 - self.idle[0].get_width() - self.attack[0].get_width() + self.run[0].get_width(), 
+                                 screen.get_height() // 2 - self.idle[0].get_height()))
+                elif self.animation == self.run:
+                    # screen.blit(pygame.transform.flip(self.animation[self.sprite], True, False), 
+                    #     (self.x - self.run[0].get_width() + self.idle[0].get_width(), self.y))
+                    screen.blit(pygame.transform.flip(self.animation[self.sprite], True, False), 
+                                (screen.get_width() // 2 - self.idle[0].get_width() - self.run[0].get_width() + self.idle[0].get_width(), 
+                                 screen.get_height() // 2 - self.idle[0].get_height()))
+                else:
+                    screen.blit(pygame.transform.flip(self.animation[self.sprite], True, False), 
+                                (screen.get_width() // 2 - self.idle[0].get_width(), 
+                                 screen.get_height() // 2 - self.idle[0].get_height()))
+        else:
+            if self.direction == 0:
+                if self.animation == self.attack:
+                    canvas.blit(self.animation[self.sprite], 
+                        (self.x - self.run[0].get_width() + self.idle[0].get_width(), self.y))
+                else:
+                    canvas.blit(self.animation[self.sprite], (self.x, self.y))
+            elif self.direction == 1:
+                if self.animation == self.attack:
+                    canvas.blit(pygame.transform.flip(self.animation[self.sprite], True, False), 
+                        (self.x - self.attack[0].get_width() + self.run[0].get_width(), self.y))
+                elif self.animation == self.run:
+                    canvas.blit(pygame.transform.flip(self.animation[self.sprite], True, False), 
+                        (self.x - self.run[0].get_width() + self.idle[0].get_width(), self.y))
+                else:
+                    canvas.blit(pygame.transform.flip(self.animation[self.sprite], True, False), (self.x, self.y))
+
+            screen.blit(canvas, (0, 0))
 
         if self.tick < fps:
             self.tick += 1
@@ -122,10 +151,10 @@ class Map:
             x, y = 0, y + 48
                     
 
-    def render(self, canvas, screen):
+    def render(self, canvas, screen, player):
         for i in range(len(self.map)):
             canvas.blit(self.map[i][2], (self.map[i][1].x, self.map[i][1].y))
-        screen.blit(canvas, (0, 0))
+        screen.blit(canvas, (player.x, player.y))
 
 
 class Spiny(Entity):
@@ -210,10 +239,11 @@ class Player(Entity):
                  damage=1, 
                  speed=2, 
                  lvl=1,
-                 step_size=3):
+                 step_size=3,
+                 entity_type="player"):
         self.step_size = step_size
         super().__init__(rect, x, y, idle, run, attack, jump, 
-                         get_damage, direction, hp, damage, speed, lvl)
+                         get_damage, direction, hp, damage, speed, lvl, entity_type)
 
     def update(self, lvl):
         keys = pygame.key.get_pressed()
@@ -365,10 +395,10 @@ def main():
         spiny.walk(lvl_1)
 
         canvas.fill((125, 177, 186))
-        lvl_1.render(canvas, screen)
+        lvl_1.render(canvas, screen, player)
 
-        player.render(canvas, screen, fps)
         spiny.render(canvas, screen, fps)
+        player.render(canvas, screen, fps)
         screen.blit(pygame.font.SysFont(None, 24).render(f"{int(clock.get_fps())}", True, (250, 177, 186)), (20, 10))
 
         pygame.display.flip()
