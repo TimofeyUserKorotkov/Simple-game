@@ -348,7 +348,7 @@ class Player(Entity):
 def main():
     width, height = 960, 480
     canvas = pygame.Surface((width, height))
-    screen = pygame.display.set_mode((width, height))
+    screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
     running = True
 
     clock = pygame.time.Clock()
