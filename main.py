@@ -41,6 +41,12 @@ class Entity:
         self.lvl = lvl
         self.entity_type = entity_type
 
+        if entity_type == "player":
+            self.hp_img = [pygame.transform.scale(pygame.image.load("sprites\gui\hp\hp.png").convert_alpha(), (27, 27)), 
+                           pygame.transform.scale(pygame.image.load("sprites\gui\hp\\no_hp.png").convert_alpha(), (27, 27))]
+
+        self.max_hp = hp
+
         self.jumping = False
         self.grounded = False
         self.velocity_y = 0
@@ -77,12 +83,11 @@ class Entity:
                                 (screen.get_width() // 2 - self.idle[0].get_width(), 
                                  screen.get_height() // 2 - self.idle[0].get_height()))
                     
-            for i in range(len(self.hp)):
-                screen.blit(self.hp_img[0], (screen.get_width() - self.hp_img[0].get_width(), 
-                                             screen.get_height() - self.hp_img[0].get_height()))
-            for i in range(len(self.max_hp) - len(self.hp)):
-                screen.blit(self.hp_img[1], (screen.get_width() - self.hp_img[0].get_width(), 
-                                             screen.get_height() - self.hp_img[0].get_height()))
+            for i in range(self.hp):
+                screen.blit(self.hp_img[0], (screen.get_width() - self.hp_img[0].get_width() - self.max_hp * 27 + i * 27, 6))
+            for i in range(self.max_hp - self.hp):
+                screen.blit(self.hp_img[1], (screen.get_width() - self.hp_img[0].get_width() - 
+                                             self.max_hp * 27 + i * 27 + self.hp * 27, 6))
         else:
             if self.direction == 0:
                 if self.animation == self.attack:
@@ -243,7 +248,7 @@ class Player(Entity):
     def __init__(self, rect, x, y, idle, run, 
                  attack, jump=None, get_damage=None, 
                  direction=0, 
-                 hp=10, 
+                 hp=3, 
                  damage=1, 
                  speed=2, 
                  lvl=1,
@@ -350,6 +355,8 @@ class Player(Entity):
             elif keys[pygame.K_a] and move_left:
                 self.direction = 1
                 self.x -= self.speed
+
+        self.hp = 2
             
 
 def main():
