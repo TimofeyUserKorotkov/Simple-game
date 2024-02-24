@@ -76,6 +76,13 @@ class Entity:
                     screen.blit(pygame.transform.flip(self.animation[self.sprite], True, False), 
                                 (screen.get_width() // 2 - self.idle[0].get_width(), 
                                  screen.get_height() // 2 - self.idle[0].get_height()))
+                    
+            for i in range(len(self.hp)):
+                screen.blit(self.hp_img[0], (screen.get_width() - self.hp_img[0].get_width(), 
+                                             screen.get_height() - self.hp_img[0].get_height()))
+            for i in range(len(self.max_hp) - len(self.hp)):
+                screen.blit(self.hp_img[1], (screen.get_width() - self.hp_img[0].get_width(), 
+                                             screen.get_height() - self.hp_img[0].get_height()))
         else:
             if self.direction == 0:
                 if self.animation == self.attack:
