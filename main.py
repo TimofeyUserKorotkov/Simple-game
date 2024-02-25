@@ -181,6 +181,7 @@ class Spiny(Entity):
             damage=1, 
             speed=0.5, 
             lvl=1):
+        self.alive = True
         super().__init__(rect, x, y, idle, run, attack, jump, 
                          get_damage, direction, hp, damage, speed, lvl)
     def walk(self, lvl, player):
@@ -213,6 +214,20 @@ class Spiny(Entity):
             elif i[0].overlap(zero_frame, (self.x + self.speed - i[1].x, self.y - i[1].y)):
                 self.direction = 1
                 # self.x -= 80
+
+        if pygame.mask.from_surface(player.idle[0]).overlap(zero_frame, (self.x - player.x, self.y - player.y)):
+            if player.hp > 1 and player.animation != player.attack:
+                player.x, player.y = player.checkpoint
+                player.hp -= 1
+
+        if player.direction == 0 and pygame.mask.from_surface(player.idle[0]).overlap(zero_frame, 
+            (self.x - player.x - 16, self.y - player.y)):
+            if player.animation == player.attack:
+                self.alive = False
+        if player.direction == 1 and pygame.mask.from_surface(player.idle[0]).overlap(zero_frame, 
+            (self.x - player.x + 16, self.y - player.y)):
+            if player.animation == player.attack:
+                self.alive = False
 
         # do = -1
 
@@ -260,6 +275,7 @@ class Player(Entity):
                  entity_type="player"):
         self.step_size = step_size
         self.jump_cooldown = 0
+        self.checkpoint = [x, y]
         super().__init__(rect, x, y, idle, run, attack, jump, 
                          get_damage, direction, hp, damage, speed, lvl, entity_type)
 
@@ -376,6 +392,7 @@ def main():
 
     clock = pygame.time.Clock()
     fps = 120
+    play = False
     path = "sprites\\"
     lvl_1 = Map([
         [5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6],
@@ -394,7 +411,7 @@ def main():
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4],
         [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4],
-        [3, 10, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 9, 0, 0, 0, 4],
+        [3, 10, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 4],
         [3, 12, 13, 0, 10, 11, 10, 11, 9, 9, 9, 0, 0, 0, 0, 0, 0, 0, 0, 4],
         [3, 0, 0, 0, 12, 13, 12, 13, 0, 0, 0, 9, 0, 0, 0, 0, 9, 0, 0, 4],
         [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 9, 9, 9, 0, 0, 0, 4],
@@ -422,21 +439,31 @@ def main():
 
     spiny = Spiny(pygame.Rect(0, 0, 40, 40), 600, 200, spiny_run, spiny_run)
 
+    play_button_rect = pygame.rect.Rect(100, 100, 100, 40)
+
     while running:
         clock.tick(fps)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            if not play:
+                if event.type == pygame.MOUSEBUTTONDOWN and play_button_rect.collidepoint(event.pos):
+                    play = True
+        if play:
+            player.update(lvl_1)
+            if spiny.alive:
+                spiny.walk(lvl_1, player)
 
-        player.update(lvl_1)
-        spiny.walk(lvl_1, player)
+            canvas.fill((125, 177, 186))
+            screen.fill((125, 177, 186))
+            lvl_1.render(canvas, screen, player)
 
-        canvas.fill((125, 177, 186))
-        screen.fill((125, 177, 186))
-        lvl_1.render(canvas, screen, player)
-
-        spiny.render(screen, fps, player)
-        player.render(screen, fps)
+            if spiny.alive:
+                spiny.render(screen, fps, player)
+            player.render(screen, fps)
+        else:
+            screen.fill((125, 177, 186))
+            pygame.draw.rect(screen, (200, 200, 200), play_button_rect)
         screen.blit(pygame.font.SysFont(None, 24).render(f"{int(clock.get_fps())}", True, (250, 177, 186)), (20, 10))
 
         pygame.display.flip()
