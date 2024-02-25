@@ -224,10 +224,12 @@ class Spiny(Entity):
             (self.x - player.x - 16, self.y - player.y)):
             if player.animation == player.attack:
                 self.alive = False
+                player.points += 1
         if player.direction == 1 and pygame.mask.from_surface(player.idle[0]).overlap(zero_frame, 
             (self.x - player.x + 16, self.y - player.y)):
             if player.animation == player.attack:
                 self.alive = False
+                player.points += 1
 
         # do = -1
 
@@ -276,6 +278,7 @@ class Player(Entity):
         self.step_size = step_size
         self.jump_cooldown = 0
         self.checkpoint = [x, y]
+        self.points = 0
         super().__init__(rect, x, y, idle, run, attack, jump, 
                          get_damage, direction, hp, damage, speed, lvl, entity_type)
 
@@ -439,7 +442,8 @@ def main():
 
     spiny = Spiny(pygame.Rect(0, 0, 40, 40), 600, 200, spiny_run, spiny_run)
 
-    play_button_rect = pygame.rect.Rect(100, 100, 100, 40)
+    play_button_rect = pygame.rect.Rect(screen.get_width() // 2 - 100, screen.get_height() // 2 - 70, 200, 60)
+    pixel_font = pygame.font.Font("fonts\craft.ttf", 24)
 
     while running:
         clock.tick(fps)
@@ -449,6 +453,9 @@ def main():
             if not play:
                 if event.type == pygame.MOUSEBUTTONDOWN and play_button_rect.collidepoint(event.pos):
                     play = True
+                if event.type == pygame.VIDEORESIZE:
+                    play_button_rect = pygame.rect.Rect(screen.get_width() // 2 - 100, screen.get_height() // 2 - 70, 200, 60)
+
         if play:
             player.update(lvl_1)
             if spiny.alive:
@@ -461,10 +468,11 @@ def main():
             if spiny.alive:
                 spiny.render(screen, fps, player)
             player.render(screen, fps)
+            screen.blit(pixel_font.render(f"{int(player.points)}", True, (250, 177, 186)), (20, 10))
         else:
             screen.fill((125, 177, 186))
             pygame.draw.rect(screen, (200, 200, 200), play_button_rect)
-        screen.blit(pygame.font.SysFont(None, 24).render(f"{int(clock.get_fps())}", True, (250, 177, 186)), (20, 10))
+            screen.blit(pygame.font.SysFont(None, 24).render(f"{int(clock.get_fps())}", True, (250, 177, 186)), (20, 10))
 
         pygame.display.flip()
 
