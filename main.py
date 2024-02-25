@@ -221,12 +221,12 @@ class Spiny(Entity):
                 player.hp -= 1
 
         if player.direction == 0 and pygame.mask.from_surface(player.idle[0]).overlap(zero_frame, 
-            (self.x - player.x - 16, self.y - player.y)):
+            (self.x - player.x - 12, self.y - player.y)):
             if player.animation == player.attack:
                 self.alive = False
                 player.points += 1
         if player.direction == 1 and pygame.mask.from_surface(player.idle[0]).overlap(zero_frame, 
-            (self.x - player.x + 16, self.y - player.y)):
+            (self.x - player.x + 12, self.y - player.y)):
             if player.animation == player.attack:
                 self.alive = False
                 player.points += 1
@@ -468,11 +468,12 @@ def main():
             if spiny.alive:
                 spiny.render(screen, fps, player)
             player.render(screen, fps)
-            screen.blit(pixel_font.render(f"{int(player.points)}", True, (250, 177, 186)), (20, 10))
+            screen.blit(pixel_font.render(f"{int(player.points)}", True, (120, 240, 120)), (20, 10))
         else:
             screen.fill((125, 177, 186))
             pygame.draw.rect(screen, (200, 200, 200), play_button_rect)
-            screen.blit(pygame.font.SysFont(None, 24).render(f"{int(clock.get_fps())}", True, (250, 177, 186)), (20, 10))
+            screen.blit(pygame.font.Font("fonts\craft.ttf", 32).render("Play", True, (50, 77, 86)), (screen.get_width() // 2 - 36, screen.get_height() // 2 - 54))
+            # screen.blit(pixel_font.render(f"{int(clock.get_fps())}", True, (250, 177, 186)), (20, 10))
 
         pygame.display.flip()
 
