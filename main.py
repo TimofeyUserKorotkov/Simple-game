@@ -157,6 +157,28 @@ class Map:
         self.slant_0100 = pygame.transform.scale(tile_spritesheet.get_sprite(32, 0, 16, 16), (48, 48))
         self.slant_0001 = pygame.transform.scale(tile_spritesheet.get_sprite(32, 32, 16, 16), (48, 48))
 
+        self.slant_0110 = pygame.transform.scale(tile_spritesheet.get_sprite(32, 16, 16, 16), (48, 48))
+        self.slant_1111 = pygame.transform.scale(tile_spritesheet.get_sprite(16, 16, 16, 16), (48, 48))
+
+        self.grass_1100 = pygame.Surface((48, 48))
+        self.grass_1100.set_colorkey((0, 0, 0))
+        self.grass_1100.blit(self.rock_1100, (0, 0))
+        self.grass_1100.blit(pygame.transform.scale(tile_spritesheet.get_sprite(112, 32, 16, 16), (48, 48)), (0, 0))
+
+        self.grass_1011 = pygame.Surface((48, 48))
+        self.grass_1011.set_colorkey((0, 0, 0))
+        self.grass_1011.blit(self.slant_0100, (0, 0))
+        self.grass_1011.blit(pygame.transform.scale(tile_spritesheet.get_sprite(96, 32, 16, 16), (48, 48)), (0, 0))
+
+        self.grass_0000 = pygame.Surface((48, 48))
+        self.grass_0000.set_colorkey((0, 0, 0))
+        self.grass_0000.blit(pygame.transform.scale(tile_spritesheet.get_sprite(112, 32, 16, 16), (48, 48)), (0, 0))
+
+        self.grass_0100 = pygame.Surface((48, 48))
+        self.grass_0100.set_colorkey((0, 0, 0))
+        self.grass_0100.blit(self.slant_0100, (0, 0))
+        self.grass_0100.blit(pygame.transform.scale(tile_spritesheet.get_sprite(144, 32, 16, 16), (48, 48)), (0, 0))
+
         # self.rock_1000 = pygame.transform.scale(tile_spritesheet.get_sprite(112, 0, 16, 16), (48, 48))
         # self.rock_1100 = pygame.transform.scale(tile_spritesheet.get_sprite(48, 0, 16, 16), (48, 48))
 
@@ -170,7 +192,9 @@ class Map:
         # self.rock_slant_bl = pygame.transform.scale(tile_spritesheet.get_sprite(0, 32, 16, 16), (48, 48))
         # self.rock_slant_br = pygame.transform.scale(tile_spritesheet.get_sprite(32, 32, 16, 16), (48, 48))
 
-        self.objects = [self.rock_1100, self.slant_0100, self.slant_0001, self.rock_0011]
+        self.objects = [self.rock_1100, self.slant_0100, self.slant_0001, self.rock_0011, 
+                        self.grass_1100, self.grass_1011, self.grass_0000, self.grass_0100, 
+                        self.slant_0110, self.slant_1111]
 
         # self.objects = [pygame.transform.flip(self.rock_middle, False, True), self.rock_middle, 
         #                 pygame.transform.rotate(self.rock_middle, 270), pygame.transform.rotate(self.rock_middle, 90),
@@ -188,9 +212,9 @@ class Map:
                     tt = str(self.tilemap[i][j])
                     if len(tt) > 1:
                         if tt[0] == "1":
-                            tile = pygame.transform.flip(self.objects[int(tt[1]) - 1], True, False)
+                            tile = pygame.transform.flip(self.objects[int(tt[1:len(tt)]) - 1], True, False)
                         elif tt[0] == "2":
-                            tile = pygame.transform.flip(self.objects[int(tt[1]) - 1], False, True)
+                            tile = pygame.transform.flip(self.objects[int(tt[1:len(tt)]) - 1], False, True)
                     else:
                         tile = self.objects[int(tt[0]) - 1]
                     self.map.append((pygame.mask.from_surface(tile), pygame.Rect(x, y, 48, 48), tile))
@@ -205,6 +229,35 @@ class Map:
             canvas.blit(self.map[i][2], (self.map[i][1].x, self.map[i][1].y))
         screen.blit(canvas, (-player.x + screen.get_width() // 2 - player.idle[0].get_width(), 
                              -player.y + screen.get_height() // 2 - player.idle[0].get_height()))
+        
+
+class Level:
+    def __init__(self, lvl_map, coords, portal_coords):
+        self.map = lvl_map
+
+        self.enemies = list()
+        path = "sprites\\"
+
+        for i in coords:
+            spiny_run_spritesheet = Spritesheet(f"{path}spiny\walk.png")
+            spiny_run = [pygame.transform.scale(spiny_run_spritesheet.get_sprite(40 * i, 0, 40, 40), (120, 120)) for i in range(8)]
+            self.enemies.append(Spiny(pygame.Rect(0, 0, 40, 40), i[0], i[1], spiny_run, spiny_run))
+
+        portal_spritesheet = Spritesheet(f"{path}environment\portal.png")
+        self.portal_sprite = pygame.transform.scale(portal_spritesheet.get_sprite(0, 0, 64, 64), (192, 192))
+        self.portal_coords = portal_coords
+    
+    def render(self, canvas, screen, player, fps):
+        offset = [-player.x + screen.get_width() // 2 - player.idle[0].get_width(),
+                  -player.y + screen.get_height() // 2 - player.idle[0].get_height()]
+        
+        self.map.render(canvas, screen, player)
+        for i in self.enemies:
+            if i.alive:
+                i.walk(self.map, player)
+                i.render(screen, fps, player)
+        screen.blit(self.portal_sprite, (self.portal_coords[0] + offset[0], 
+                    self.portal_coords[1] + offset[1]))
 
 
 class Spiny(Entity):
@@ -255,6 +308,9 @@ class Spiny(Entity):
             if player.hp > 1 and player.animation != player.attack:
                 player.x, player.y = player.checkpoint
                 player.hp -= 1
+            elif player.hp < 2:
+                self.hp = 0
+                player.state = 2
 
         if player.direction == 0 and pygame.mask.from_surface(player.idle[0]).overlap(zero_frame, 
             (self.x - player.x - 12, self.y - player.y)):
@@ -315,10 +371,11 @@ class Player(Entity):
         self.jump_cooldown = 0
         self.checkpoint = [x, y]
         self.points = 0
+        self.state = 0
         super().__init__(rect, x, y, idle, run, attack, jump, 
                          get_damage, direction, hp, damage, speed, lvl, entity_type)
 
-    def update(self, lvl):
+    def update(self, lvl, cur_level):
         keys = pygame.key.get_pressed()
         mouse = pygame.mouse.get_pressed()
         
@@ -404,6 +461,8 @@ class Player(Entity):
                 self.animation.clear()
                 self.animation.extend(self.attack)
 
+                # print(self.x, self.y)
+
         elif not self.grounded:
             self.velocity_y += 0.5
             self.sprite = 0
@@ -421,9 +480,18 @@ class Player(Entity):
         if self.jump_cooldown != 0:
             self.jump_cooldown -= 1
         
-        if self.y > 5000:
+        if self.y > 3000 and self.hp > 1:
             self.hp -= 1
             self.x, self.y = self.checkpoint
+        elif self.y > 3000 and self.hp < 2:
+            self.hp = 0
+            self.state = 2
+
+        portal_mask = pygame.mask.from_surface(cur_level.portal_sprite)
+        
+        if portal_mask.overlap(zero_frame, (self.x - cur_level.portal_coords[0], 
+                                            self.y - cur_level.portal_coords[1])):
+            self.state = 1
             
 
 def main():
@@ -437,61 +505,21 @@ def main():
     fps = 120
     play = False
     path = "sprites\\"
-    # lvl_1 = Map([
-    #     [5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6],
-    #     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4],
-    #     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4],
-    #     [3, 10, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 9, 0, 0, 0, 4, 3, 10, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 9, 0, 0, 0, 4],
-    #     [3, 12, 13, 0, 10, 11, 0, 0, 9, 9, 9, 0, 0, 0, 0, 0, 0, 0, 0, 4, 3, 12, 13, 0, 10, 11, 0, 0, 9, 9, 9, 0, 0, 0, 0, 0, 0, 0, 0, 4],
-    #     [3, 0, 0, 0, 12, 13, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 13, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 4],
-    #     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 9, 9, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 9, 9, 9, 0, 0, 0, 4],
-    #     [3, 0, 10, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 4, 3, 0, 10, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 4],
-    #     [3, 0, 12, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 4, 3, 0, 12, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 4],
-    #     [7, 2, 2, 2, 2, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 8, 7, 2, 2, 2, 2, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 8],
-    #     [5, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 5, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6],
-    #     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4],
-    #     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4],
-    #     [3, 10, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 9, 0, 0, 0, 0, 0, 10, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 9, 0, 0, 0, 4],
-    #     [3, 12, 13, 0, 10, 11, 0, 0, 9, 9, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 13, 0, 10, 11, 0, 0, 9, 9, 9, 0, 0, 0, 0, 0, 0, 0, 0, 4],
-    #     [3, 0, 0, 0, 12, 13, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 12, 13, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 4],
-    #     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 9, 9, 9, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 9, 9, 9, 0, 0, 0, 4],
-    #     [3, 0, 10, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 4, 3, 0, 10, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 4],
-    #     [3, 0, 12, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 4, 3, 0, 12, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 4],
-    #     [7, 2, 2, 2, 2, 2, 2, 2, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 8, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 8],
-    #     [5, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 6],
-    #     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4],
-    #     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4],
-    #     [3, 10, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 9, 0, 0, 0, 4, 3, 10, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 9, 0, 0, 0, 4],
-    #     [3, 12, 13, 0, 10, 11, 0, 0, 9, 9, 9, 0, 0, 0, 0, 0, 0, 0, 0, 4, 3, 12, 13, 0, 10, 11, 0, 0, 9, 9, 9, 0, 0, 0, 0, 0, 0, 0, 0, 4],
-    #     [3, 0, 0, 0, 12, 13, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 13, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 4],
-    #     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 9, 9, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 9, 9, 9, 0, 0, 0, 4],
-    #     [3, 0, 10, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 4, 3, 0, 10, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 4],
-    #     [3, 0, 12, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 4, 3, 0, 12, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 4],
-    #     [7, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 8, 7, 2, 2, 2, 2, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 8],
-    #     [5, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 5, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6],
-    #     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4],
-    #     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4],
-    #     [3, 10, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 9, 0, 0, 0, 0, 0, 10, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 9, 0, 0, 0, 4],
-    #     [3, 12, 13, 0, 10, 11, 0, 0, 9, 9, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 13, 0, 10, 11, 0, 0, 9, 9, 9, 0, 0, 0, 0, 0, 0, 0, 0, 4],
-    #     [3, 0, 0, 0, 12, 13, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 12, 13, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 4],
-    #     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 9, 9, 9, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 9, 9, 9, 0, 0, 0, 4],
-    #     [3, 0, 10, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 4, 3, 0, 10, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 4],
-    #     [3, 0, 12, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 4, 3, 0, 12, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 4],
-    #     [7, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 8, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 8]
-    # ])
 
-    lvl_1 = Map([
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [12, 2, 12, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 10],
-        [13, 3, 13, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 10]
+    lvl1_map = Map([
+        [0], [0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 108, 8, 0, 108, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [108, 5, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 108, 5, 5, 8, 0, 103, 3, 0, 103, 3, 0, 108, 8],
+        [109, 10, 9, 102, 6, 7, 7, 7, 7, 7, 7, 7, 106, 2, 0, 109, 10, 10, 9, 0, 0, 0, 0, 0, 0, 0, 103, 3],
+        [103, 4, 3, 103, 3, 0, 0, 0, 0, 0, 0, 0, 103, 3, 0, 109, 10, 10, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 108, 5, 5, 5, 5, 5, 8],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 103, 4, 4, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 109, 10, 10, 10, 10, 10, 9, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 103, 4, 4, 4, 4, 4, 3, 0, 0, 0, 0]
     ])
 
     # print(len(lvl_1.tilemap), len(lvl_1.tilemap[0]))
     # for i in range(len(lvl_1.tilemap)):
     #     print(len(lvl_1.tilemap[i]))
-    lvl_1.generate()
+    lvl1_map.generate()
 
     player_spritesheet = Spritesheet(f"{path}knight\Anomaly_anim.png")
     #* x3 ---->
@@ -500,23 +528,25 @@ def main():
     player_run = [pygame.transform.scale(player_spritesheet.get_sprite(48 * i + 16, 32 + 14, 16, 18), (48, 54)) for i in range(7)]
     player_jump = [pygame.transform.scale(player_spritesheet.get_sprite(112, 46, 16, 18), (48, 54))]
 
-    spiny_idle_spritesheet = Spritesheet(f"{path}spiny\idle.png")
-    spiny_run_spritesheet = Spritesheet(f"{path}spiny\walk.png")
-    spine_idle = [pygame.transform.scale(spiny_idle_spritesheet.get_sprite(40 * i + 8, 13, 40, 40), (120, 120)) for i in range(7)]
-    spiny_run = [pygame.transform.scale(spiny_run_spritesheet.get_sprite(40 * i, 0, 40, 40), (120, 120)) for i in range(8)]
+    #! spiny_idle_spritesheet = Spritesheet(f"{path}spiny\idle.png")
+    # spiny_run_spritesheet = Spritesheet(f"{path}spiny\walk.png")
+    # spine_idle = [pygame.transform.scale(spiny_idle_spritesheet.get_sprite(40 * i + 8, 13, 40, 40), (120, 120)) for i in range(7)]
+    # spiny_run = [pygame.transform.scale(spiny_run_spritesheet.get_sprite(40 * i, 0, 40, 40), (120, 120)) for i in range(8)]
     player_rect = pygame.Rect(0, 0, 42, 54)
     
     player = Player(player_rect, 96, 48, player_idle, player_run, player_attack, player_jump)
     # player = Player(player_rect, 1488, 912, player_idle, player_run, player_attack, player_jump)
     # 1488, 912
 
-    spiny = Spiny(pygame.Rect(0, 0, 40, 40), 600, 200, spiny_run, spiny_run)
+    #! spiny = Spiny(pygame.Rect(0, 0, 40, 40), 600, 200, spiny_run, spiny_run)
 
     play_button_rect = pygame.rect.Rect(screen.get_width() // 2 - 100, screen.get_height() // 2 - 70, 200, 60)
     pixel_font = pygame.font.Font("fonts\craft.ttf", 24)
 
     # ! ==>
     canvas.fill((125, 177, 186))
+
+    lvl1 = Level(lvl1_map, [[600, 200]], [1536, 96])
 
     while running:
         clock.tick(fps)
@@ -529,19 +559,29 @@ def main():
                 if event.type == pygame.VIDEORESIZE:
                     play_button_rect = pygame.rect.Rect(screen.get_width() // 2 - 100, screen.get_height() // 2 - 70, 200, 60)
 
-        if play:
-            player.update(lvl_1)
-            if spiny.alive:
-                spiny.walk(lvl_1, player)
+        if play and player.state == 0:
+            player.update(lvl1.map, lvl1)
+            # if spiny.alive:
+            #     spiny.alive = False
+            #     spiny.walk(lvl_1, player)
 
             screen.fill((125, 177, 186))
-            lvl_1.render(canvas, screen, player)
+            # lvl_1.render(canvas, screen, player)
 
-            if spiny.alive:
-                spiny.render(screen, fps, player)
+            # if spiny.alive:
+            #     spiny.render(screen, fps, player)
+            lvl1.render(canvas, screen, player, fps)
             player.render(screen, fps)
             screen.blit(pixel_font.render(f"{int(player.points)}", True, (120, 240, 120)), (20, 10))
             screen.blit(pixel_font.render(f"{int(clock.get_fps())}", True, (250, 177, 186)), (40, 10))
+        elif player.state == 1:
+            final_window = pygame.Surface((0, 0))
+            final_window.set_colorkey((0, 0, 0))
+            final_window.fill((0, 0, 0, 250))
+            screen.blit(final_window, (0, 0))
+            # pygame.draw.rect(canvas, (0, 0, 0, 20), pygame.rect.Rect(0, 0, screen.get_width(), screen.get_height()))
+        elif player.state == 2:
+            pass
         else:
             screen.fill((125, 177, 186))
             pygame.draw.rect(screen, (200, 200, 200), play_button_rect)
