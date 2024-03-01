@@ -499,11 +499,8 @@ def main():
 
     lvl1 = Level(lvl1_map, [[200, 0]], [1536, 96])
     lvl2 = Level(lvl2_map, [[900, -144]], [1488, 0])
-    # lvl1 = Level(lvl1_map, [], [1536, 96])
     levels = [lvl1, lvl2]
     cur_lvl = None
-
-    # lvl1
 
     while running:
         clock.tick(fps)
@@ -549,9 +546,9 @@ def main():
                                                      screen.get_height() // 2 - 400 + 480, 300, 60)
 
                 lvl1_button_rect = pygame.rect.Rect(screen.get_width() // 2 - 200 + 50,
-                                                    screen.get_height() // 2 - 300 + 300, 300, 60)
-                lvl2_button_rect = pygame.rect.Rect(screen.get_width() // 2 - 200 + 50,
                                                     screen.get_height() // 2 - 400 + 300, 300, 60)
+                lvl2_button_rect = pygame.rect.Rect(screen.get_width() // 2 - 200 + 50,
+                                                    screen.get_height() // 2 - 300 + 300, 300, 60)
 
         if play and player.state == 0:
             player.update(levels[cur_lvl].map, levels[cur_lvl])
