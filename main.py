@@ -1,5 +1,4 @@
 import pygame
-import sqlite3
 
 
 class Spritesheet:
@@ -269,8 +268,11 @@ class Spiny(Entity):
             hp=10, 
             damage=1, 
             speed=0.5, 
-            lvl=1):
+            lvl=1,
+            distance=500):
         self.alive = True
+        self.start_pos = [x, y]
+        self.distance = distance
         super().__init__(rect, x, y, idle, run, attack, jump, 
                          get_damage, direction, hp, damage, speed, lvl)
     def walk(self, lvl, player):
@@ -342,10 +344,12 @@ class Spiny(Entity):
         #     self.direction = 1
         #     self.x -= 80
 
-        if self.direction == 0:
+        if self.direction == 0 and self.x + self.speed <= self.start_pos[0] + self.speed * self.distance:
             self.x += self.speed
-        elif self.direction == 1:
+        elif self.direction == 1 and self.x + self.speed >= self.start_pos[0]:
             self.x -= self.speed
+        else:
+            self.direction = 1 if self.direction == 0 else 0
 
         if not self.grounded:
             self.velocity_y += 0.5
@@ -496,7 +500,7 @@ class Player(Entity):
 
 def main():
     # width, height = 960, 480
-    width, height = 10000, 10000
+    width, height = 4800, 4800
     canvas = pygame.Surface((width, height))
     screen = pygame.display.set_mode((960, 480), pygame.RESIZABLE)
     running = True
@@ -504,6 +508,7 @@ def main():
     clock = pygame.time.Clock()
     fps = 120
     play = False
+    menu = False
     path = "sprites\\"
 
     lvl1_map = Map([
@@ -516,10 +521,21 @@ def main():
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 103, 4, 4, 4, 4, 4, 3, 0, 0, 0, 0]
     ])
 
+    lvl2_map = Map([
+        # [0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 102, 2, 0, 0, 108, 5, 5, 5, 5, 5, 8],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 103, 3, 0, 0, 109, 10, 10, 10, 10, 10, 9, 108, 5, 8],
+        [0, 0, 0, 0, 0, 0, 0, 0, 102, 2, 0, 0, 102, 2, 0, 0, 0, 0, 0, 103, 4, 4, 4, 4, 4, 3, 103, 4, 3],
+        [108, 5, 8, 0, 0, 0, 102, 2, 103, 3, 0, 0, 103, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 108, 5, 8],
+        [109, 10, 9, 102, 2, 0, 103, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 103, 4, 3],
+        [103, 4, 3, 103, 3]
+    ])
+
     # print(len(lvl_1.tilemap), len(lvl_1.tilemap[0]))
     # for i in range(len(lvl_1.tilemap)):
     #     print(len(lvl_1.tilemap[i]))
     lvl1_map.generate()
+    lvl2_map.generate()
 
     player_spritesheet = Spritesheet(f"{path}knight\Anomaly_anim.png")
     #* x3 ---->
@@ -541,26 +557,69 @@ def main():
     #! spiny = Spiny(pygame.Rect(0, 0, 40, 40), 600, 200, spiny_run, spiny_run)
 
     play_button_rect = pygame.rect.Rect(screen.get_width() // 2 - 100, screen.get_height() // 2 - 70, 200, 60)
+    menu_button_rect = pygame.rect.Rect(screen.get_width() // 2 - 200 + 50, screen.get_height() // 2 - 300 + 480, 300, 60)
+    retry_button_rect = pygame.rect.Rect(screen.get_width() // 2 - 200 + 50, screen.get_height() // 2 - 400 + 480, 300, 60)
+
+    lvl1_button_rect = pygame.rect.Rect(screen.get_width() // 2 - 200 + 50, screen.get_height() // 2 - 400 + 300, 300, 60)
+    lvl2_button_rect = pygame.rect.Rect(screen.get_width() // 2 - 200 + 50, screen.get_height() // 2 - 300 + 300, 300, 60)
     pixel_font = pygame.font.Font("fonts\craft.ttf", 24)
 
     # ! ==>
     canvas.fill((125, 177, 186))
 
-    lvl1 = Level(lvl1_map, [[600, 200]], [1536, 96])
+    lvl1 = Level(lvl1_map, [[200, 0]], [1536, 96])
+    lvl2 = Level(lvl2_map, [[900, -144]], [1488, 0])
+    # lvl1 = Level(lvl1_map, [], [1536, 96])
+    levels = [lvl1, lvl2]
+    cur_lvl = None
+
+    # lvl1
 
     while running:
         clock.tick(fps)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            if not play:
+            if not menu:
                 if event.type == pygame.MOUSEBUTTONDOWN and play_button_rect.collidepoint(event.pos):
+                    menu = True
+            elif not play:
+                if event.type == pygame.MOUSEBUTTONDOWN and lvl1_button_rect.collidepoint(event.pos):
                     play = True
-                if event.type == pygame.VIDEORESIZE:
-                    play_button_rect = pygame.rect.Rect(screen.get_width() // 2 - 100, screen.get_height() // 2 - 70, 200, 60)
+                    cur_lvl = 0
+                    player.points = 0
+                    canvas.fill((125, 177, 186))
+                elif event.type == pygame.MOUSEBUTTONDOWN and lvl2_button_rect.collidepoint(event.pos):
+                    play = True
+                    cur_lvl = 1
+                    player.points = 0
+                    canvas.fill((125, 177, 186))
+            if player.state == 1 or player.state == 2:
+                if event.type == pygame.MOUSEBUTTONDOWN and menu_button_rect.collidepoint(event.pos):
+                    play = False
+                    for i in levels[cur_lvl].enemies:
+                        i.alive = True
+                    player.hp = player.max_hp
+                    player.state = 0
+                    player.x, player.y = player.checkpoint
+            if player.state == 2:
+                if event.type == pygame.MOUSEBUTTONDOWN and retry_button_rect.collidepoint(event.pos):
+                    play = False
+                    for i in levels[cur_lvl].enemies:
+                        i.alive = True
+                    player.hp = player.max_hp
+                    player.state = 0
+                    player.x, player.y = player.checkpoint
+            if event.type == pygame.VIDEORESIZE:
+                play_button_rect = pygame.rect.Rect(screen.get_width() // 2 - 100, screen.get_height() // 2 - 70, 200, 60)
+                menu_button_rect = pygame.rect.Rect(screen.get_width() // 2 - 200 + 50, screen.get_height() // 2 - 300 + 480, 300, 60)
+                retry_button_rect = pygame.rect.Rect(screen.get_width() // 2 - 200 + 50, screen.get_height() // 2 - 400 + 480, 300, 60)
+
+                lvl1_button_rect = pygame.rect.Rect(screen.get_width() // 2 - 200 + 50, screen.get_height() // 2 - 300 + 300, 300, 60)
+                lvl2_button_rect = pygame.rect.Rect(screen.get_width() // 2 - 200 + 50, screen.get_height() // 2 - 400 + 300, 300, 60)
 
         if play and player.state == 0:
-            player.update(lvl1.map, lvl1)
+            player.update(levels[cur_lvl].map, levels[cur_lvl])
             # if spiny.alive:
             #     spiny.alive = False
             #     spiny.walk(lvl_1, player)
@@ -570,23 +629,79 @@ def main():
 
             # if spiny.alive:
             #     spiny.render(screen, fps, player)
-            lvl1.render(canvas, screen, player, fps)
+            levels[cur_lvl].render(canvas, screen, player, fps)
             player.render(screen, fps)
             screen.blit(pixel_font.render(f"{int(player.points)}", True, (120, 240, 120)), (20, 10))
-            screen.blit(pixel_font.render(f"{int(clock.get_fps())}", True, (250, 177, 186)), (40, 10))
+            # screen.blit(pixel_font.render(f"{int(clock.get_fps())}", True, (250, 177, 186)), (40, 10))
         elif player.state == 1:
-            final_window = pygame.Surface((0, 0))
-            final_window.set_colorkey((0, 0, 0))
-            final_window.fill((0, 0, 0, 250))
-            screen.blit(final_window, (0, 0))
-            # pygame.draw.rect(canvas, (0, 0, 0, 20), pygame.rect.Rect(0, 0, screen.get_width(), screen.get_height()))
+            # final_window = pygame.Surface((0, 0))
+            # final_window.set_colorkey((0, 0, 0))
+            # final_window.fill((0, 0, 0, 250))
+            # screen.blit(final_window, (0, 0))
+            pygame.draw.rect(screen, (125, 177, 186), pygame.rect.Rect(0, 0, screen.get_width(), screen.get_height()))
+            pygame.draw.rect(screen, (100, 100, 100), pygame.rect.Rect(
+                screen.get_width() // 2 - 200, screen.get_height() // 2 - 300, 400, 600))
+            pygame.draw.rect(screen, (10, 10, 10), pygame.rect.Rect(
+                screen.get_width() // 2 - 203, screen.get_height() // 2 - 303, 406, 606), 3)
+            # print(len(levels[cur_lvl].enemies), player.hp)
+            killed = 0
+            for i in levels[cur_lvl].enemies:
+                if not i.alive:
+                    killed += 1
+
+            screen.blit(pygame.font.Font("fonts\craft.ttf", 64).render("Scores:", True, (250, 250, 250)), (screen.get_width() // 2 - 200 + 20, screen.get_height() // 2 - 300 + 20))
+            screen.blit(pygame.font.Font("fonts\craft.ttf", 32).render(f"Monsters killed: {killed}/{len(lvl1.enemies)}", True, (250, 250, 250)), 
+                        (screen.get_width() // 2 - 200 + 20, screen.get_height() // 2 - 300 + 120))
+            screen.blit(pygame.font.Font("fonts\craft.ttf", 32).render(f"Damage received: {player.max_hp - player.hp}/{player.max_hp}", True, (250, 250, 250)), 
+                        (screen.get_width() // 2 - 200 + 20, screen.get_height() // 2 - 300 + 180))
+            screen.blit(pygame.font.Font("fonts\craft.ttf", 48).render(f"Total: {killed + player.hp}", True, (250, 250, 250)), 
+                        (screen.get_width() // 2 - 200 + 20, screen.get_height() // 2 - 300 + 340))
+            
+            pygame.draw.rect(screen, (200, 200, 200), menu_button_rect)
+            screen.blit(pygame.font.Font("fonts\craft.ttf", 48).render("Menu", True, (50, 77, 86)), 
+                        (screen.get_width() // 2 - 200 + 140, screen.get_height() // 2 - 300 + 490))
         elif player.state == 2:
-            pass
+            pygame.draw.rect(screen, (125, 177, 186), pygame.rect.Rect(0, 0, screen.get_width(), screen.get_height()))
+            pygame.draw.rect(screen, (100, 100, 100), pygame.rect.Rect(
+                screen.get_width() // 2 - 200, screen.get_height() // 2 - 300, 400, 600))
+            pygame.draw.rect(screen, (10, 10, 10), pygame.rect.Rect(
+                screen.get_width() // 2 - 203, screen.get_height() // 2 - 303, 406, 606), 3)
+            # killed = 0
+            # for i in lvl1.enemies:
+            #     if not i.alive:
+            #         killed += 1
+
+            # screen.blit(pygame.font.Font("fonts\craft.ttf", 64).render("Scores:", True, (250, 250, 250)), (screen.get_width() // 2 - 200 + 20, screen.get_height() // 2 - 300 + 20))
+            # screen.blit(pygame.font.Font("fonts\craft.ttf", 32).render(f"Monsters killed: {killed}/{len(lvl1.enemies)}", True, (250, 250, 250)), 
+            #             (screen.get_width() // 2 - 200 + 20, screen.get_height() // 2 - 300 + 120))
+            # screen.blit(pygame.font.Font("fonts\craft.ttf", 32).render(f"Damage received: {player.max_hp - player.hp}/{player.max_hp}", True, (250, 250, 250)), 
+            #             (screen.get_width() // 2 - 200 + 20, screen.get_height() // 2 - 300 + 180))
+            # screen.blit(pygame.font.Font("fonts\craft.ttf", 48).render("you lose :(", True, (150, 150, 150)), 
+            #             (screen.get_width() // 2 - 200 + 130, screen.get_height() // 2 - 300 + 340))
+
+            screen.blit(pygame.font.Font("fonts\craft.ttf", 48).render("you lose :(", True, (50, 77, 86)), 
+                        (screen.get_width() // 2 - 250 + 120, screen.get_height() // 2 - 300 + 200))
+            
+            pygame.draw.rect(screen, (200, 200, 200), retry_button_rect)
+            pygame.draw.rect(screen, (200, 200, 200), menu_button_rect)
+            screen.blit(pygame.font.Font("fonts\craft.ttf", 48).render("Retry", True, (50, 77, 86)), 
+                        (screen.get_width() // 2 - 200 + 140, screen.get_height() // 2 - 400 + 490))
+            screen.blit(pygame.font.Font("fonts\craft.ttf", 48).render("Menu", True, (50, 77, 86)), 
+                        (screen.get_width() // 2 - 200 + 140, screen.get_height() // 2 - 300 + 490))
+        elif menu:
+            screen.fill((125, 177, 186))
+            pygame.draw.rect(screen, (200, 200, 200), lvl1_button_rect)
+            pygame.draw.rect(screen, (200, 200, 200), lvl2_button_rect)
+            screen.blit(pygame.font.Font("fonts\craft.ttf", 48).render("lvl 1", True, (50, 77, 86)), 
+                        (screen.get_width() // 2 - 200 + 140, screen.get_height() // 2 - 400 + 310))
+            screen.blit(pygame.font.Font("fonts\craft.ttf", 48).render("lvl 2", True, (50, 77, 86)), 
+                        (screen.get_width() // 2 - 200 + 140, screen.get_height() // 2 - 300 + 310))
+            # screen.blit(pixel_font.render(f"{int(clock.get_fps())}", True, (250, 177, 186)), (20, 10))
         else:
             screen.fill((125, 177, 186))
             pygame.draw.rect(screen, (200, 200, 200), play_button_rect)
             screen.blit(pygame.font.Font("fonts\craft.ttf", 32).render("Play", True, (50, 77, 86)), (screen.get_width() // 2 - 36, screen.get_height() // 2 - 54))
-            screen.blit(pixel_font.render(f"{int(clock.get_fps())}", True, (250, 177, 186)), (20, 10))
+            # screen.blit(pixel_font.render(f"{int(clock.get_fps())}", True, (250, 177, 186)), (20, 10))
 
         pygame.display.flip()
 
